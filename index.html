@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NPF Field — Astro Exposure Calculator</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#06070C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NPF Field">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#06070C;
+    --panel:#0F1420;
+    --panel-2:#131A2B;
+    --border:#1E2740;
+    --text:#EDEFF7;
+    --dim:#7C88A8;
+    --cyan:#5FD3E0;
+    --amber:#E08A3C;
+    --danger:#E0573C;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Roboto Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    --radius: 14px;
+  }
+  body.nv{
+    --bg:#0A0000;
+    --panel:#160303;
+    --panel-2:#1D0505;
+    --border:#3A0A0A;
+    --text:#FF6A55;
+    --dim:#9E3D30;
+    --cyan:#FF6A55;
+    --amber:#FF6A55;
+    --danger:#FF6A55;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.35) 0, transparent 60%),
+      radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.25) 0, transparent 60%),
+      radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,0.3) 0, transparent 60%),
+      radial-gradient(1px 1px at 30% 85%, rgba(255,255,255,0.2) 0, transparent 60%),
+      radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.25) 0, transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    transition: background-color .3s, color .3s;
+    padding-bottom:48px;
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+    padding-top:env(safe-area-inset-top);
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:16px 16px calc(8px + env(safe-area-inset-bottom));}
+  .install-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--panel-2);border:1px solid var(--border);border-radius:11px;
+    padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--dim);
+  }
+  .install-banner b{color:var(--text);}
+  .install-banner button{
+    background:transparent;border:1px solid var(--border);color:var(--dim);
+    border-radius:7px;padding:5px 9px;font-size:16px;line-height:1;cursor:pointer;
+  }
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 4px 20px;
+  }
+  .brand{display:flex;flex-direction:column;}
+  .brand .kicker{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim);
+    text-transform:uppercase;
+  }
+  .brand h1{font-size:19px;margin:2px 0 0;font-weight:650;letter-spacing:-.01em;}
+  .nv-toggle{
+    display:flex;align-items:center;gap:8px;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:999px;padding:7px 12px;cursor:pointer;
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--dim);
+    user-select:none;
+  }
+  .nv-toggle .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);}
+  body.nv .nv-toggle .dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+  body.nv .nv-toggle{color:var(--text);}
+
+  .hero{
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px 20px;text-align:center;margin-bottom:14px;
+    position:relative;overflow:hidden;
+  }
+  .hero .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;}
+  .hero .big{
+    font-family:var(--mono);font-weight:600;font-size:56px;line-height:1;margin:10px 0 2px;
+    color:var(--cyan);text-shadow:0 0 24px rgba(95,211,224,.35);letter-spacing:-.02em;
+  }
+  body.nv .hero .big{text-shadow:0 0 24px rgba(255,106,85,.45);}
+  .hero .sub{font-family:var(--mono);font-size:12px;color:var(--dim);}
+  .method-row{display:flex;gap:8px;margin-top:16px;justify-content:center;flex-wrap:wrap;}
+  .chip{
+    font-family:var(--mono);font-size:11px;border:1px solid var(--border);
+    background:var(--panel);border-radius:8px;padding:8px 10px;text-align:left;min-width:92px;
+  }
+  .chip .k{color:var(--dim);display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;}
+  .chip .v{color:var(--text);font-size:15px;font-weight:600;margin-top:2px;display:block;}
+  .chip.active{border-color:var(--cyan);}
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;
+  }
+  .card h2{
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--dim);margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .row{display:flex;gap:10px;margin-bottom:10px;}
+  .field{flex:1;display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:12px;color:var(--dim);}
+  select, input[type=number], input[type=text], input[type=date]{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:9px;padding:10px 10px;font-size:15px;font-family:var(--sans);width:100%;
+  }
+  input[type=number]{font-family:var(--mono);}
+  .stepper{display:flex;align-items:center;gap:8px;}
+  .stepper button{
+    width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);font-size:18px;line-height:1;cursor:pointer;
+  }
+  .stepper input{text-align:center;}
+  .hint{font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4;}
+  .btn{
+    width:100%;padding:12px;border-radius:9px;border:1px solid var(--cyan);
+    background:transparent;color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;
+  }
+  .btn.ghost{border-color:var(--border);color:var(--text);}
+  .preset{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 4px;border-top:1px solid var(--border);
+  }
+  .preset:first-of-type{border-top:none;}
+  .preset .meta{font-size:13px;}
+  .preset .meta b{display:block;}
+  .preset .meta span{color:var(--dim);font-family:var(--mono);font-size:11.5px;}
+  .preset-actions{display:flex;gap:6px;}
+  .iconbtn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--dim);
+    border-radius:7px;padding:6px 9px;font-size:12px;cursor:pointer;
+  }
+  .moon-row{display:flex;align-items:center;gap:14px;}
+  .moon-disc{width:56px;height:56px;border-radius:50%;background:#0A0E18;position:relative;flex-shrink:0;
+    border:1px solid var(--border);overflow:hidden;}
+  .moon-lit{position:absolute;top:0;bottom:0;background:var(--amber);}
+  .moon-info b{font-size:15px;display:block;}
+  .moon-info span{font-family:var(--mono);font-size:12px;color:var(--dim);}
+  .badge{
+    display:inline-block;margin-top:8px;font-size:11.5px;font-family:var(--mono);
+    padding:5px 9px;border-radius:7px;border:1px solid var(--border);
+  }
+  .badge.good{color:#7FE0A0;border-color:#2A4A38;}
+  .badge.ok{color:var(--amber);border-color:#4A3A2A;}
+  .badge.bad{color:var(--danger);border-color:#4A2A2A;}
+  ul.tips{margin:0;padding-left:18px;}
+  ul.tips li{font-size:13.5px;line-height:1.6;color:var(--text);margin-bottom:6px;}
+  ul.tips li::marker{color:var(--dim);font-family:var(--mono);font-size:12px;}
+  .rule-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;}
+  .rule-table td, .rule-table th{padding:7px 4px;border-top:1px solid var(--border);text-align:left;}
+  .rule-table th{color:var(--dim);font-weight:500;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;}
+  .footer-note{font-size:11.5px;color:var(--dim);text-align:center;padding:18px 8px 0;line-height:1.6;}
+  .empty{color:var(--dim);font-size:12.5px;text-align:center;padding:10px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <span class="kicker">Prototype · iOS + Android</span>
+      <h1>NPF Field</h1>
+    </div>
+    <div class="nv-toggle" id="nvToggle"><span class="dot"></span> Night Vision</div>
+  </header>
+
+  <div class="install-banner" id="installBanner" style="display:none">
+    <span id="installText"></span>
+    <button id="installDismiss">✕</button>
+  </div>
+
+  <!-- HERO RESULT -->
+  <div class="hero">
+    <div class="label">Max exposure before star trailing</div>
+    <div class="big" id="heroValue">–</div>
+    <div class="sub" id="heroSub">set your gear below</div>
+    <div class="method-row" id="methodRow"></div>
+  </div>
+
+  <!-- GEAR INPUTS -->
+  <div class="card">
+    <h2>Gear</h2>
+    <div class="row">
+      <div class="field">
+        <label>Camera profile</label>
+        <select id="cameraProfile">
+          <option value="">— Manual entry —</option>
+          <optgroup label="Sony α6xxx (APS-C)">
+            <option value="sony_a6000">Sony α6000</option>
+            <option value="sony_a6100">Sony α6100</option>
+            <option value="sony_a6300">Sony α6300</option>
+            <option value="sony_a6400">Sony α6400</option>
+            <option value="sony_a6500">Sony α6500</option>
+            <option value="sony_a6600">Sony α6600</option>
+            <option value="sony_a6700">Sony α6700</option>
+          </optgroup>
+        </select>
+        <div class="hint" id="profileHint">Picks sensor size + resolution for you — still fully editable below. More lines coming; use manual entry for anything not listed yet.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Sensor</label>
+        <select id="sensorSelect">
+          <option value="ff">Full Frame (36×24mm)</option>
+          <option value="apsc_canon">APS-C — Canon (1.6×)</option>
+          <option value="apsc_nikon">APS-C — Nikon/Sony/Fuji (1.5×)</option>
+          <option value="mft">Micro Four Thirds (2.0×)</option>
+          <option value="custom">Custom sensor width</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" id="customWidthRow" style="display:none">
+      <div class="field">
+        <label>Sensor width (mm)</label>
+        <input type="number" id="customWidth" step="0.1" value="23.5">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Resolution (MP)</label>
+        <input type="number" id="megapixels" step="0.1" value="24">
+      </div>
+      <div class="field">
+        <label>Focal length (mm, actual — not equiv.)</label>
+        <input type="number" id="focalLength" step="1" value="24">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Aperture (f-number)</label>
+        <input type="number" id="aperture" step="0.1" value="2.8">
+      </div>
+      <div class="field">
+        <label>Pixel pitch (µm) — auto</label>
+        <input type="number" id="pixelPitch" step="0.01" readonly>
+      </div>
+    </div>
+    <div class="hint">Pixel pitch is derived from sensor width ÷ resolution. NPF uses this directly for a sharper, sensor-aware limit than the 500/300 rules.</div>
+    <div class="row" style="margin-top:12px">
+      <div class="field">
+        <input type="text" id="presetName" placeholder="Name this setup, e.g. 'Sony A7III + Sigma 24mm'">
+      </div>
+    </div>
+    <button class="btn" id="savePreset">Save gear preset</button>
+  </div>
+
+  <!-- CAMERA SETTINGS GUIDE -->
+  <div class="card">
+    <h2>Camera settings guide</h2>
+    <div class="row">
+      <div class="field">
+        <label>What are you shooting?</label>
+        <select id="scenarioSelect">
+          <option value="milkyway">Milky Way / wide starscape</option>
+          <option value="startrails">Star trails (stacked)</option>
+          <option value="aurora">Aurora</option>
+          <option value="meteor">Meteor shower</option>
+          <option value="tracked">Tracked deep sky (on a tracker)</option>
+        </select>
+      </div>
+    </div>
+    <table class="rule-table" style="margin-top:4px">
+      <tr><td>ISO</td><td id="scIso" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Shutter</td><td id="scShutter" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="hint" id="scNotes" style="margin-top:8px"></div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Fixed reference — applies every session</div>
+    <table class="rule-table">
+      <tr><td>Shooting mode</td><td>Manual (M)</td></tr>
+      <tr><td>Focus</td><td>Manual, infinity via live-view zoom on a bright star</td></tr>
+      <tr><td>File format</td><td>RAW</td></tr>
+      <tr><td>White balance</td><td>3800–4500K, or Daylight — irrelevant in RAW, adjust later</td></tr>
+      <tr><td>Drive mode</td><td>2s timer or remote release</td></tr>
+      <tr><td>Image stabilization</td><td>Off (on tripod — IBIS/OIS fights a static shot)</td></tr>
+      <tr><td>Long exposure NR</td><td>Off for single frames (doubles shot time); fine for star trail stacks</td></tr>
+      <tr><td>Metering</td><td>Doesn't matter — you're in Manual</td></tr>
+      <tr><td>Flash</td><td>Off</td></tr>
+    </table>
+  </div>
+
+  <!-- SAVED PRESETS -->
+  <div class="card">
+    <h2>Saved presets <span id="presetCount" style="color:var(--dim);font-weight:400"></span></h2>
+    <div id="presetList"><div class="empty">No presets saved yet.</div></div>
+    <div class="hint" id="storageStatus" style="margin-top:8px"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" id="exportPresets" style="flex:1">Export backup</button>
+      <button class="btn ghost" id="importPresetsBtn" style="flex:1">Import backup</button>
+      <input type="file" id="importPresetsFile" accept="application/json" style="display:none">
+    </div>
+    <div class="hint" style="margin-top:6px">iOS can clear site storage after ~7 days unopened — export a backup occasionally if you rely on saved presets.</div>
+  </div>
+
+  <!-- RULE COMPARISON -->
+  <div class="card">
+    <h2>Rule comparison</h2>
+    <table class="rule-table">
+      <tr><th>Rule</th><th>Formula</th><th>Result</th></tr>
+      <tr><td>NPF</td><td>(35N+30p)/f</td><td id="rNPF">–</td></tr>
+      <tr><td>500</td><td>500/(f·crop)</td><td id="r500">–</td></tr>
+      <tr><td>300</td><td>300/(f·crop)</td><td id="r300">–</td></tr>
+    </table>
+    <div class="hint" style="margin-top:10px">500/300 are legacy full-frame-era rules of thumb. NPF accounts for your actual sensor resolution and aperture — trust it over 500/300 on modern high-MP bodies.</div>
+  </div>
+
+  <!-- SKY / MOON -->
+  <div class="card">
+    <h2>Tonight's sky</h2>
+    <div class="row">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="skyDate">
+      </div>
+    </div>
+    <div class="moon-row">
+      <div class="moon-disc"><div class="moon-lit" id="moonLit"></div></div>
+      <div class="moon-info">
+        <b id="moonName">–</b>
+        <span id="moonIllum">– illumination</span>
+      </div>
+    </div>
+    <div id="moonBadge"></div>
+    <div class="hint" style="margin-top:10px">Milky Way core season (Northern Hemisphere): roughly February–October, best contrast April–August, pre-dawn in spring shifting to evening by late summer.</div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="card">
+    <h2>Field suggestions</h2>
+    <ul class="tips">
+      <li>Focus manually at infinity using live-view zoomed on a bright star, not the lens's hard stop.</li>
+      <li>Shoot 1 stop down from wide-open if coma/astigmatism smears corner stars — e.g. f/2.8 lens at f/3.2–f/4.</li>
+      <li>Use a 2s timer or remote release to kill shutter-press shake; lock up mirror on DSLRs.</li>
+      <li>Shoot RAW — you'll push shadows hard in post and need the dynamic range.</li>
+      <li>Bring a dew heater strap or hand warmers for the lens barrel on humid nights.</li>
+      <li>Widest aperture your lens allows (low f-number) trades some corner sharpness for shorter, trail-free exposures — worth it for star points.</li>
+      <li>Whichever exposure time you land on, take a test frame and zoom to 100% on a corner star to confirm no trailing before committing to a sequence.</li>
+    </ul>
+  </div>
+
+  <div class="footer-note" id="footerNote">
+    All calculations run locally — no network call at compute time.<br>
+    Installable as an app — use your browser's "Add to Home Screen" / "Install app" option. After that first install, it launches and works fully offline. The native app (Expo/EAS build) will replace this with real local SQLite plus live AR sky view.
+  </div>
+
+</div>
+
+<script>
+// ---------- Sensor data ----------
+const SENSORS = {
+  ff:          { name:'Full Frame',            width:36.0, crop:1.0,  aspect: 3/2 },
+  apsc_canon:  { name:'APS-C (Canon)',          width:22.3, crop:1.6,  aspect: 3/2 },
+  apsc_nikon:  { name:'APS-C (Nikon/Sony/Fuji)',width:23.5, crop:1.5,  aspect: 3/2 },
+  mft:         { name:'Micro Four Thirds',      width:17.3, crop:2.0,  aspect: 4/3 },
+  custom:      { name:'Custom',                 width:23.5, crop:1.0,  aspect: 3/2 }
+};
+
+// Camera profiles: pre-fill sensor + resolution for known bodies.
+// sensorKey must match a key in SENSORS above.
+const CAMERA_PROFILES = {
+  sony_a6000: { label:'Sony α6000', sensorKey:'apsc_nikon', width:23.5, mp:24.3 },
+  sony_a6100: { label:'Sony α6100', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
+  sony_a6300: { label:'Sony α6300', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
+  sony_a6400: { label:'Sony α6400', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
+  sony_a6500: { label:'Sony α6500', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
+  sony_a6600: { label:'Sony α6600', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
+  sony_a6700: { label:'Sony α6700', sensorKey:'apsc_nikon', width:23.5, mp:26.0 }
+};
+
+const els = {
+  sensorSelect: document.getElementById('sensorSelect'),
+  customWidthRow: document.getElementById('customWidthRow'),
+  customWidth: document.getElementById('customWidth'),
+  megapixels: document.getElementById('megapixels'),
+  focalLength: document.getElementById('focalLength'),
+  aperture: document.getElementById('aperture'),
+  pixelPitch: document.getElementById('pixelPitch'),
+  heroValue: document.getElementById('heroValue'),
+  heroSub: document.getElementById('heroSub'),
+  methodRow: document.getElementById('methodRow'),
+  rNPF: document.getElementById('rNPF'),
+  r500: document.getElementById('r500'),
+  r300: document.getElementById('r300'),
+  presetName: document.getElementById('presetName'),
+  presetList: document.getElementById('presetList'),
+  presetCount: document.getElementById('presetCount'),
+  savePreset: document.getElementById('savePreset'),
+  cameraProfile: document.getElementById('cameraProfile'),
+  skyDate: document.getElementById('skyDate'),
+  moonLit: document.getElementById('moonLit'),
+  moonName: document.getElementById('moonName'),
+  moonIllum: document.getElementById('moonIllum'),
+  moonBadge: document.getElementById('moonBadge'),
+  nvToggle: document.getElementById('nvToggle')
+};
+
+function currentSensor(){
+  const key = els.sensorSelect.value;
+  const s = { ...SENSORS[key] };
+  if(key === 'custom'){ s.width = parseFloat(els.customWidth.value) || 23.5; s.crop = 36/s.width; }
+  return s;
+}
+
+function computePixelPitch(sensor, mp){
+  if(!mp || mp <= 0) return 0;
+  const horizontalPx = Math.sqrt(mp * 1e6 * sensor.aspect);
+  return (sensor.width / horizontalPx) * 1000; // microns
+}
+
+function npfSeconds(N, p, f){ return (35*N + 30*p) / f; }
+function ruleSeconds(constant, f, crop){ return constant / (f*crop); }
+
+function fmt(sec){
+  if(!isFinite(sec) || sec <= 0) return '–';
+  if(sec < 10) return sec.toFixed(1) + 's';
+  return Math.round(sec) + 's';
+}
+
+function recalc(){
+  const sensor = currentSensor();
+  els.customWidthRow.style.display = (els.sensorSelect.value === 'custom') ? 'flex' : 'none';
+
+  const mp = parseFloat(els.megapixels.value) || 0;
+  const f = parseFloat(els.focalLength.value) || 0;
+  const N = parseFloat(els.aperture.value) || 0;
+  const pitch = computePixelPitch(sensor, mp);
+  els.pixelPitch.value = pitch ? pitch.toFixed(2) : '';
+
+  const npf = (f>0 && N>0 && pitch>0) ? npfSeconds(N, pitch, f) : NaN;
+  const r500 = (f>0) ? ruleSeconds(500, f, sensor.crop) : NaN;
+  const r300 = (f>0) ? ruleSeconds(300, f, sensor.crop) : NaN;
+
+  els.rNPF.textContent = fmt(npf);
+  els.r500.textContent = fmt(r500);
+  els.r300.textContent = fmt(r300);
+
+  if(isFinite(npf)){
+    els.heroValue.textContent = fmt(npf);
+    els.heroSub.textContent = `NPF rule · ${sensor.name} · ${f}mm f/${N}`;
+  } else {
+    els.heroValue.textContent = '–';
+    els.heroSub.textContent = 'set your gear below';
+  }
+
+  els.methodRow.innerHTML = `
+    <div class="chip active"><span class="k">NPF</span><span class="v">${fmt(npf)}</span></div>
+    <div class="chip"><span class="k">500 rule</span><span class="v">${fmt(r500)}</span></div>
+    <div class="chip"><span class="k">300 rule</span><span class="v">${fmt(r300)}</span></div>
+  `;
+
+  if(document.getElementById('scenarioSelect')) renderScenario();
+}
+
+['sensorSelect','customWidth','megapixels','focalLength','aperture'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', recalc);
+  document.getElementById(id).addEventListener('change', recalc);
+});
+
+// ---------- Shooting scenario guide ----------
+const SCENARIOS = {
+  milkyway: {
+    iso: '1600–6400 (start ~3200)',
+    shutter: 'npf',
+    notes: 'Use the NPF result above as your shutter cap. Expose to the right on the histogram — you can often pull ISO back down in post if there\'s headroom.'
+  },
+  startrails: {
+    iso: '400–800',
+    shutter: 'fixed',
+    shutterText: '30–60s per sub, shot back-to-back',
+    notes: 'Ignore the NPF/500 cap entirely — trailing is the point. Shoot a long continuous sequence and stack the frames in post (e.g. StarStaX) rather than one ultra-long exposure.'
+  },
+  aurora: {
+    iso: '800–3200',
+    shutter: 'variable',
+    shutterText: '2–5s (fast aurora) up to your NPF cap (slow aurora)',
+    notes: 'Fast-moving curtains need a short shutter to keep structure defined; slow, diffuse glow can use the full NPF-rule exposure time.'
+  },
+  meteor: {
+    iso: '3200–6400',
+    shutter: 'npf',
+    notes: 'Widest aperture your lens allows, shutter at the NPF/500 cap above, and shoot continuously. Most frames will be empty — that\'s normal, you\'re playing a numbers game.'
+  },
+  tracked: {
+    iso: '400–1600',
+    shutter: 'fixed',
+    shutterText: '60–300s per sub, tracker-dependent',
+    notes: 'Once tracked, the star-trailing limit no longer applies — exposure length is set by light pollution and histogram instead, not by NPF/500/300.'
+  }
+};
+
+function renderScenario(){
+  const key = document.getElementById('scenarioSelect').value;
+  const s = SCENARIOS[key];
+  document.getElementById('scIso').textContent = s.iso;
+  let shutterText;
+  if(s.shutter === 'npf') shutterText = els.rNPF.textContent + ' (NPF cap, above)';
+  else shutterText = s.shutterText;
+  document.getElementById('scShutter').textContent = shutterText;
+  document.getElementById('scNotes').textContent = s.notes;
+}
+document.getElementById('scenarioSelect').addEventListener('change', renderScenario);
+
+
+els.cameraProfile.addEventListener('change', ()=>{
+  const key = els.cameraProfile.value;
+  if(!key) return;
+  const p = CAMERA_PROFILES[key];
+  if(!p) return;
+  els.sensorSelect.value = p.sensorKey;
+  els.megapixels.value = p.mp;
+  els.customWidthRow.style.display = 'none';
+  if(!els.presetName.value.trim()) els.presetName.value = p.label;
+  recalc();
+});
+// If the person edits sensor/MP/width manually after picking a profile,
+// treat that as "no longer matching a known profile" so the dropdown stays honest.
+['sensorSelect','megapixels','customWidth'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    els.cameraProfile.value = '';
+  });
+});
+
+// ---------- Night vision toggle ----------
+els.nvToggle.addEventListener('click', ()=>{
+  document.body.classList.toggle('nv');
+});
+
+// ---------- Moon phase ----------
+function moonPhase(date){
+  const synodic = 29.530588853;
+  const knownNewMoon = Date.UTC(2000,0,6,18,14,0);
+  const diffDays = (date.getTime() - knownNewMoon) / 86400000;
+  let phase = (diffDays % synodic) / synodic;
+  if(phase < 0) phase += 1;
+  const illum = (1 - Math.cos(2*Math.PI*phase)) / 2;
+  return { phase, illum };
+}
+function moonPhaseName(phase){
+  if(phase < 0.03 || phase > 0.97) return 'New Moon';
+  if(phase < 0.22) return 'Waxing Crescent';
+  if(phase < 0.28) return 'First Quarter';
+  if(phase < 0.47) return 'Waxing Gibbous';
+  if(phase < 0.53) return 'Full Moon';
+  if(phase < 0.72) return 'Waning Gibbous';
+  if(phase < 0.78) return 'Last Quarter';
+  return 'Waning Crescent';
+}
+function renderMoon(){
+  const dateVal = els.skyDate.value;
+  const date = dateVal ? new Date(dateVal + 'T12:00:00Z') : new Date();
+  const { phase, illum } = moonPhase(date);
+  const pct = Math.round(illum*100);
+  els.moonName.textContent = moonPhaseName(phase);
+  els.moonIllum.textContent = pct + '% illumination';
+  const waxing = phase < 0.5;
+  els.moonLit.style.left = waxing ? 'auto' : '0';
+  els.moonLit.style.right = waxing ? '0' : 'auto';
+  els.moonLit.style.width = Math.max(2, (illum*56)) + 'px';
+
+  let badge = '';
+  if(pct < 20) badge = '<span class="badge good">Dark sky — good for Milky Way / faint DSOs</span>';
+  else if(pct < 55) badge = '<span class="badge ok">Moderate moonlight — some washout of faint detail</span>';
+  else badge = '<span class="badge bad">Bright moon — expect significant sky glow</span>';
+  els.moonBadge.innerHTML = badge;
+}
+els.skyDate.addEventListener('input', renderMoon);
+(function initDate(){
+  const today = new Date();
+  els.skyDate.value = today.toISOString().slice(0,10);
+})();
+
+// ---------- Presets (local, per-device storage) ----------
+// Uses Claude's window.storage when previewed inside Claude (needs network).
+// Falls back to real browser localStorage when opened as a plain file on-device (works fully offline).
+const hasCloudStorage = (typeof window.storage !== 'undefined');
+let storageMode = 'none';
+
+async function storageGet(key){
+  if(hasCloudStorage){
+    try{
+      const res = await window.storage.get(key, false);
+      storageMode = 'cloud';
+      return res ? res.value : null;
+    }catch(e){ /* fall through */ }
+  }
+  try{
+    const v = localStorage.getItem(key);
+    storageMode = 'local';
+    return v;
+  }catch(e){
+    storageMode = 'session';
+    return sessionMemory[key] || null;
+  }
+}
+async function storageSet(key, val){
+  if(hasCloudStorage){
+    try{
+      await window.storage.set(key, val, false);
+      storageMode = 'cloud';
+      return;
+    }catch(e){ /* fall through */ }
+  }
+  try{
+    localStorage.setItem(key, val);
+    storageMode = 'local';
+  }catch(e){
+    storageMode = 'session';
+    sessionMemory[key] = val;
+  }
+}
+const sessionMemory = {};
+
+async function loadPresets(){
+  try{
+    const raw = await storageGet('gear-presets');
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+async function savePresets(list){
+  await storageSet('gear-presets', JSON.stringify(list));
+}
+function renderStorageStatus(){
+  const el = document.getElementById('storageStatus');
+  if(!el) return;
+  if(storageMode === 'cloud') el.textContent = 'Storage: synced via Claude (requires network).';
+  else if(storageMode === 'local') el.textContent = 'Storage: saved on this device, works offline.';
+  else if(storageMode === 'session') el.textContent = 'Storage: this session only — presets will not survive closing the app.';
+  else el.textContent = '';
+}
+
+async function renderPresets(){
+  const list = await loadPresets();
+  renderStorageStatus();
+  els.presetCount.textContent = list.length ? `(${list.length})` : '';
+  if(!list.length){
+    els.presetList.innerHTML = '<div class="empty">No presets saved yet.</div>';
+    return;
+  }
+  els.presetList.innerHTML = list.map((p,i)=>`
+    <div class="preset">
+      <div class="meta">
+        <b>${p.name}</b>
+        <span>${SENSORS[p.sensorKey] ? SENSORS[p.sensorKey].name : 'Custom'} · ${p.focalLength}mm · f/${p.aperture} · ${p.megapixels}MP</span>
+      </div>
+      <div class="preset-actions">
+        <button class="iconbtn" data-load="${i}">Load</button>
+        <button class="iconbtn" data-del="${i}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  els.presetList.querySelectorAll('[data-load]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const list = await loadPresets();
+      const p = list[parseInt(btn.dataset.load)];
+      if(!p) return;
+      els.sensorSelect.value = p.sensorKey;
+      if(p.sensorKey === 'custom') els.customWidth.value = p.customWidth || 23.5;
+      els.megapixels.value = p.megapixels;
+      els.focalLength.value = p.focalLength;
+      els.aperture.value = p.aperture;
+      els.cameraProfile.value = p.cameraProfile || '';
+      recalc();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+  els.presetList.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const list = await loadPresets();
+      list.splice(parseInt(btn.dataset.del), 1);
+      await savePresets(list);
+      renderPresets();
+    });
+  });
+}
+
+els.savePreset.addEventListener('click', async ()=>{
+  const name = els.presetName.value.trim();
+  if(!name){ els.presetName.focus(); return; }
+  const list = await loadPresets();
+  list.push({
+    name,
+    cameraProfile: els.cameraProfile.value || null,
+    sensorKey: els.sensorSelect.value,
+    customWidth: parseFloat(els.customWidth.value) || null,
+    megapixels: parseFloat(els.megapixels.value) || 0,
+    focalLength: parseFloat(els.focalLength.value) || 0,
+    aperture: parseFloat(els.aperture.value) || 0
+  });
+  await savePresets(list);
+  els.presetName.value = '';
+  renderPresets();
+});
+
+// ---------- Init ----------
+recalc();
+renderMoon();
+renderPresets();
+
+// ---------- Platform-aware install banner ----------
+(function installBanner(){
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(isStandalone) return; // already installed, don't nag
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document);
+  const isAndroid = /Android/.test(ua);
+  const banner = document.getElementById('installBanner');
+  const text = document.getElementById('installText');
+  if(isIOS){
+    text.innerHTML = 'Install: tap <b>Share</b> → <b>Add to Home Screen</b>.';
+  } else if(isAndroid){
+    text.innerHTML = 'Install: tap the browser <b>⋮ menu</b> → <b>Install app</b> (or "Add to Home screen").';
+  } else {
+    text.innerHTML = 'Install this app from your browser menu for offline use.';
+  }
+  banner.style.display = 'flex';
+  document.getElementById('installDismiss').addEventListener('click', ()=>{
+    banner.style.display = 'none';
+  });
+})();
+
+// ---------- Export / import preset backups ----------
+document.getElementById('exportPresets').addEventListener('click', async ()=>{
+  const list = await loadPresets();
+  const blob = new Blob([JSON.stringify(list, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'npf-field-presets.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('importPresetsBtn').addEventListener('click', ()=>{
+  document.getElementById('importPresetsFile').click();
+});
+document.getElementById('importPresetsFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const incoming = JSON.parse(text);
+    if(!Array.isArray(incoming)) throw new Error('not a preset list');
+    const existing = await loadPresets();
+    const merged = existing.concat(incoming);
+    await savePresets(merged);
+    renderPresets();
+  }catch(err){
+    alert('Could not read that file as a presets backup.');
+  }
+  e.target.value = '';
+});
+
+// ---------- Service worker (offline install) ----------
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').then(reg=>{
+      reg.addEventListener('updatefound', ()=>{
+        const nw = reg.installing;
+        nw && nw.addEventListener('statechange', ()=>{
+          if(nw.state === 'activated'){
+            const note = document.getElementById('footerNote');
+            if(note){
+              const tag = document.createElement('div');
+              tag.style.marginTop = '8px';
+              tag.style.color = 'var(--cyan)';
+              tag.textContent = 'Cached for offline use ✓';
+              note.appendChild(tag);
+            }
+          }
+        });
+      });
+    }).catch(err=> console.warn('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
