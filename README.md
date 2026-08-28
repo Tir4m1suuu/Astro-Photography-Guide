@@ -1,0 +1,1 @@
+This web application allows users to calculate optimal camera settings for night sky photography. By adding this page to your home screen, you can access the tool offline for convenient use in the field.
