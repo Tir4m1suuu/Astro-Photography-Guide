@@ -216,8 +216,45 @@
             <option value="sony_a6600">Sony α6600</option>
             <option value="sony_a6700">Sony α6700</option>
           </optgroup>
+          <optgroup label="Sony α7/α9 (Full Frame)">
+            <option value="sony_a7iii">Sony α7 III</option>
+            <option value="sony_a7iv">Sony α7 IV</option>
+            <option value="sony_a7c">Sony α7C</option>
+            <option value="sony_a7riv">Sony α7R V</option>
+            <option value="sony_a7siii">Sony α7S III</option>
+          </optgroup>
+          <optgroup label="Canon EOS R (Full Frame)">
+            <option value="canon_r8">Canon EOS R8</option>
+            <option value="canon_r6ii">Canon EOS R6 Mark II</option>
+            <option value="canon_rp">Canon EOS RP</option>
+          </optgroup>
+          <optgroup label="Canon (APS-C)">
+            <option value="canon_r7">Canon EOS R7</option>
+            <option value="canon_r10">Canon EOS R10</option>
+            <option value="canon_90d">Canon EOS 90D</option>
+            <option value="canon_t7i">Canon Rebel T7i / 800D</option>
+          </optgroup>
+          <optgroup label="Nikon Z (Full Frame)">
+            <option value="nikon_z5">Nikon Z5</option>
+            <option value="nikon_z6ii">Nikon Z6 II</option>
+            <option value="nikon_z7ii">Nikon Z7 II</option>
+            <option value="nikon_d780">Nikon D780</option>
+          </optgroup>
+          <optgroup label="Nikon (APS-C / DX)">
+            <option value="nikon_z50">Nikon Z50</option>
+            <option value="nikon_zfc">Nikon Zfc</option>
+          </optgroup>
+          <optgroup label="Fujifilm X (APS-C)">
+            <option value="fuji_xt4">Fujifilm X-T4</option>
+            <option value="fuji_xt5">Fujifilm X-T5</option>
+            <option value="fuji_xs10">Fujifilm X-S10</option>
+          </optgroup>
+          <optgroup label="Micro Four Thirds">
+            <option value="om_om1">OM System OM-1</option>
+            <option value="panasonic_gh6">Panasonic Lumix GH6</option>
+          </optgroup>
         </select>
-        <div class="hint" id="profileHint">Picks sensor size + resolution for you — still fully editable below. More lines coming; use manual entry for anything not listed yet.</div>
+        <div class="hint" id="profileHint">Picks sensor size + resolution for you — still fully editable below. Don't see your body? Use manual entry.</div>
       </div>
     </div>
     <div class="row">
@@ -275,10 +312,23 @@
         <label>What are you shooting?</label>
         <select id="scenarioSelect">
           <option value="milkyway">Milky Way / wide starscape</option>
-          <option value="startrails">Star trails (stacked)</option>
+          <option value="startrails_stacked">Star trails — stacked (many short subs)</option>
+          <option value="startrails_single">Star trails — single long exposure</option>
           <option value="aurora">Aurora</option>
           <option value="meteor">Meteor shower</option>
           <option value="tracked">Tracked deep sky (on a tracker)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Sky brightness (Bortle)</label>
+        <select id="skyBrightness">
+          <option value="pristine">Pristine dark sky (Bortle 1–2)</option>
+          <option value="rural" selected>Rural dark sky (Bortle 3–4)</option>
+          <option value="transition">Rural/suburban transition (Bortle 5)</option>
+          <option value="suburban">Suburban (Bortle 6–7)</option>
+          <option value="urban">Urban (Bortle 8–9)</option>
         </select>
       </div>
     </div>
@@ -287,6 +337,7 @@
       <tr><td>Shutter</td><td id="scShutter" style="text-align:right;color:var(--cyan)">–</td></tr>
     </table>
     <div class="hint" id="scNotes" style="margin-top:8px"></div>
+    <div class="hint" style="margin-top:6px">ISO is computed from your aperture, the shutter time above, sky brightness, and tonight's moon illumination — a calculated starting point, not a light-meter reading. Check your histogram and adjust.</div>
 
     <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Fixed reference — applies every session</div>
     <table class="rule-table">
@@ -381,13 +432,44 @@ const SENSORS = {
 // Camera profiles: pre-fill sensor + resolution for known bodies.
 // sensorKey must match a key in SENSORS above.
 const CAMERA_PROFILES = {
+  // Sony APS-C
   sony_a6000: { label:'Sony α6000', sensorKey:'apsc_nikon', width:23.5, mp:24.3 },
   sony_a6100: { label:'Sony α6100', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
   sony_a6300: { label:'Sony α6300', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
   sony_a6400: { label:'Sony α6400', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
   sony_a6500: { label:'Sony α6500', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
   sony_a6600: { label:'Sony α6600', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
-  sony_a6700: { label:'Sony α6700', sensorKey:'apsc_nikon', width:23.5, mp:26.0 }
+  sony_a6700: { label:'Sony α6700', sensorKey:'apsc_nikon', width:23.5, mp:26.0 },
+  // Sony Full Frame
+  sony_a7iii:  { label:'Sony α7 III',  sensorKey:'ff', width:36.0, mp:24.2 },
+  sony_a7iv:   { label:'Sony α7 IV',   sensorKey:'ff', width:36.0, mp:33.0 },
+  sony_a7c:    { label:'Sony α7C',     sensorKey:'ff', width:36.0, mp:24.2 },
+  sony_a7riv:  { label:'Sony α7R V',   sensorKey:'ff', width:36.0, mp:61.0 },
+  sony_a7siii: { label:'Sony α7S III', sensorKey:'ff', width:36.0, mp:12.1 },
+  // Canon Full Frame
+  canon_r8:    { label:'Canon EOS R8',          sensorKey:'ff', width:36.0, mp:24.2 },
+  canon_r6ii:  { label:'Canon EOS R6 Mark II',  sensorKey:'ff', width:36.0, mp:24.2 },
+  canon_rp:    { label:'Canon EOS RP',          sensorKey:'ff', width:36.0, mp:26.2 },
+  // Canon APS-C
+  canon_r7:    { label:'Canon EOS R7',           sensorKey:'apsc_canon', width:22.3, mp:32.5 },
+  canon_r10:   { label:'Canon EOS R10',          sensorKey:'apsc_canon', width:22.3, mp:24.2 },
+  canon_90d:   { label:'Canon EOS 90D',          sensorKey:'apsc_canon', width:22.3, mp:32.5 },
+  canon_t7i:   { label:'Canon Rebel T7i / 800D', sensorKey:'apsc_canon', width:22.3, mp:24.2 },
+  // Nikon Full Frame
+  nikon_z5:    { label:'Nikon Z5',    sensorKey:'ff', width:36.0, mp:24.0 },
+  nikon_z6ii:  { label:'Nikon Z6 II', sensorKey:'ff', width:36.0, mp:24.5 },
+  nikon_z7ii:  { label:'Nikon Z7 II', sensorKey:'ff', width:36.0, mp:45.7 },
+  nikon_d780:  { label:'Nikon D780',  sensorKey:'ff', width:36.0, mp:24.5 },
+  // Nikon APS-C / DX
+  nikon_z50:   { label:'Nikon Z50', sensorKey:'apsc_nikon', width:23.5, mp:20.9 },
+  nikon_zfc:   { label:'Nikon Zfc', sensorKey:'apsc_nikon', width:23.5, mp:20.9 },
+  // Fujifilm APS-C
+  fuji_xt4:    { label:'Fujifilm X-T4',  sensorKey:'apsc_nikon', width:23.5, mp:26.1 },
+  fuji_xt5:    { label:'Fujifilm X-T5',  sensorKey:'apsc_nikon', width:23.5, mp:40.2 },
+  fuji_xs10:   { label:'Fujifilm X-S10', sensorKey:'apsc_nikon', width:23.5, mp:26.1 },
+  // Micro Four Thirds
+  om_om1:        { label:'OM System OM-1',      sensorKey:'mft', width:17.4, mp:20.4 },
+  panasonic_gh6: { label:'Panasonic Lumix GH6',  sensorKey:'mft', width:17.3, mp:25.2 }
 };
 
 const els = {
@@ -482,46 +564,121 @@ function recalc(){
 // ---------- Shooting scenario guide ----------
 const SCENARIOS = {
   milkyway: {
-    iso: '1600–6400 (start ~3200)',
+    isoRange: '1600–6400 typical',
     shutter: 'npf',
     notes: 'Use the NPF result above as your shutter cap. Expose to the right on the histogram — you can often pull ISO back down in post if there\'s headroom.'
   },
-  startrails: {
-    iso: '400–800',
+  startrails_stacked: {
+    isoRange: '400–800 typical',
     shutter: 'fixed',
     shutterText: '30–60s per sub, shot back-to-back',
-    notes: 'Ignore the NPF/500 cap entirely — trailing is the point. Shoot a long continuous sequence and stack the frames in post (e.g. StarStaX) rather than one ultra-long exposure.'
+    isoOverride: null,
+    notes: 'Ignore the NPF/500 cap entirely — trailing is the point. Shoot a long continuous sequence and stack the frames in post (e.g. StarStaX) rather than one ultra-long exposure. Forgiving of one ruined frame — just drop it from the stack.'
+  },
+  startrails_single: {
+    isoRange: '100–400 typical',
+    shutter: 'fixed',
+    shutterText: '15–60+ min, single Bulb exposure',
+    refShutterSec: 1800,
+    notes: 'One continuous exposure in Bulb mode via intervalometer — keep ISO low, since there\'s no stacking to average out noise over that long a single frame. Turn Long Exposure NR ON here (opposite of every other scenario on this list) — a single very long frame benefits from in-camera dark-frame subtraction. One ruined frame (headlights, a passing cloud) ruins the whole shot, so it\'s less forgiving than stacking.'
   },
   aurora: {
-    iso: '800–3200',
+    isoRange: '800–3200 typical',
     shutter: 'variable',
     shutterText: '2–5s (fast aurora) up to your NPF cap (slow aurora)',
+    refShutterSec: null, // computed from NPF at render time
     notes: 'Fast-moving curtains need a short shutter to keep structure defined; slow, diffuse glow can use the full NPF-rule exposure time.'
   },
   meteor: {
-    iso: '3200–6400',
+    isoRange: '3200–6400 typical',
     shutter: 'npf',
     notes: 'Widest aperture your lens allows, shutter at the NPF/500 cap above, and shoot continuously. Most frames will be empty — that\'s normal, you\'re playing a numbers game.'
   },
   tracked: {
-    iso: '400–1600',
+    isoRange: '400–1600 typical',
     shutter: 'fixed',
     shutterText: '60–300s per sub, tracker-dependent',
+    refShutterSec: 120,
     notes: 'Once tracked, the star-trailing limit no longer applies — exposure length is set by light pollution and histogram instead, not by NPF/500/300.'
   }
 };
 
+// Rough EV-at-ISO-100 reference for a correctly exposed night sky under
+// different levels of light pollution (Bortle-ish buckets). These are
+// approximations, not a light meter reading — a real starting point, not gospel.
+const SKY_EV_BASE = {
+  pristine: -7.3,   // Bortle 1–2, true dark sky site
+  rural: -6.3,      // Bortle 3–4
+  transition: -5.3, // Bortle 5, rural/suburban edge
+  suburban: -4.3,   // Bortle 6–7
+  urban: -3.0       // Bortle 8–9
+};
+const ISO_STOPS = [100,125,160,200,250,320,400,500,640,800,1000,1250,1600,2000,2500,3200,4000,5000,6400,8000,10000,12800,16000,20000,25600,32000,40000,51200,64000,80000,102400];
+
+function roundToStandardISO(iso){
+  if(!isFinite(iso) || iso <= 0) return null;
+  let best = ISO_STOPS[0], bestDiff = Infinity;
+  for(const s of ISO_STOPS){
+    const d = Math.abs(Math.log2(s) - Math.log2(iso));
+    if(d < bestDiff){ bestDiff = d; best = s; }
+  }
+  return best;
+}
+
+// Suggests ISO by solving the standard exposure equation for a target EV,
+// given this session's aperture + the scenario's reference shutter time,
+// then nudging that target brighter based on tonight's moon illumination.
+function suggestISO(scenarioKey, npfSeconds){
+  const s = SCENARIOS[scenarioKey];
+  const N = parseFloat(els.aperture.value);
+  if(!N || N <= 0) return null;
+
+  let t;
+  if(s.shutter === 'npf' || s.shutter === 'variable'){
+    t = npfSeconds;
+  } else {
+    t = s.refShutterSec;
+  }
+  if(!isFinite(t) || t <= 0) return null;
+
+  const skyKey = document.getElementById('skyBrightness').value;
+  let ev = SKY_EV_BASE[skyKey];
+  // Moonlight brightens the scene — add up to ~4 EV at full illumination.
+  ev += (currentMoonIllum || 0) * 4;
+
+  const rawIso = 100 * (N * N) / (t * Math.pow(2, ev));
+  return roundToStandardISO(rawIso);
+}
+
 function renderScenario(){
   const key = document.getElementById('scenarioSelect').value;
   const s = SCENARIOS[key];
-  document.getElementById('scIso').textContent = s.iso;
+
   let shutterText;
   if(s.shutter === 'npf') shutterText = els.rNPF.textContent + ' (NPF cap, above)';
   else shutterText = s.shutterText;
   document.getElementById('scShutter').textContent = shutterText;
+
+  const npfSecondsNum = (function(){
+    const N = parseFloat(els.aperture.value);
+    const f = parseFloat(els.focalLength.value);
+    const pitch = parseFloat(els.pixelPitch.value);
+    if(N>0 && f>0 && pitch>0) return npfSeconds(N, pitch, f);
+    return NaN;
+  })();
+
+  const suggested = suggestISO(key, npfSecondsNum);
+  const isoEl = document.getElementById('scIso');
+  if(suggested){
+    isoEl.innerHTML = `ISO ${suggested} <span style="color:var(--dim);font-weight:400">(${s.isoRange})</span>`;
+  } else {
+    isoEl.textContent = s.isoRange;
+  }
+
   document.getElementById('scNotes').textContent = s.notes;
 }
 document.getElementById('scenarioSelect').addEventListener('change', renderScenario);
+document.getElementById('skyBrightness').addEventListener('change', renderScenario);
 
 
 els.cameraProfile.addEventListener('change', ()=>{
@@ -568,10 +725,12 @@ function moonPhaseName(phase){
   if(phase < 0.78) return 'Last Quarter';
   return 'Waning Crescent';
 }
+let currentMoonIllum = 0;
 function renderMoon(){
   const dateVal = els.skyDate.value;
   const date = dateVal ? new Date(dateVal + 'T12:00:00Z') : new Date();
   const { phase, illum } = moonPhase(date);
+  currentMoonIllum = illum;
   const pct = Math.round(illum*100);
   els.moonName.textContent = moonPhaseName(phase);
   els.moonIllum.textContent = pct + '% illumination';
@@ -585,6 +744,8 @@ function renderMoon(){
   else if(pct < 55) badge = '<span class="badge ok">Moderate moonlight — some washout of faint detail</span>';
   else badge = '<span class="badge bad">Bright moon — expect significant sky glow</span>';
   els.moonBadge.innerHTML = badge;
+
+  if(document.getElementById('scenarioSelect')) renderScenario();
 }
 els.skyDate.addEventListener('input', renderMoon);
 (function initDate(){

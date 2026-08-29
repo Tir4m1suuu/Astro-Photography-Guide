@@ -1,4 +1,4 @@
-const CACHE_NAME = 'npf-field-v3';
+const CACHE_NAME = 'npf-field-v4';
 const PRECACHE_URLS = [
   './',
   './index.html',
