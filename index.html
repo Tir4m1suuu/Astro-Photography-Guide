@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="NPF Field">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
+<script src="sky-data.js"></script>
 <style>
   :root{
     --bg:#06070C;
@@ -173,6 +174,20 @@
   .rule-table th{color:var(--dim);font-weight:500;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;}
   .footer-note{font-size:11.5px;color:var(--dim);text-align:center;padding:18px 8px 0;line-height:1.6;}
   .empty{color:var(--dim);font-size:12.5px;text-align:center;padding:10px 0;}
+  .month-btn{
+    font-family:var(--mono);font-size:11px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--dim);border-radius:8px;padding:7px 10px;cursor:pointer;
+  }
+  .month-btn.active{border-color:var(--cyan);color:var(--cyan);}
+  .year-bar{
+    flex:1;background:var(--panel-2);border:1px solid var(--border);border-radius:4px 4px 0 0;
+    position:relative;min-height:2px;
+  }
+  .year-bar.active{background:var(--cyan);border-color:var(--cyan);}
+  .year-bar-label{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--dim);}
+  #skyDome svg{width:100%;height:auto;display:block;}
+  .const-row{display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--border);}
+  .const-row:first-child{border-top:none;}
 </style>
 </head>
 <body>
@@ -378,6 +393,44 @@
     <div class="hint" style="margin-top:10px">500/300 are legacy full-frame-era rules of thumb. NPF accounts for your actual sensor resolution and aperture — trust it over 500/300 on modern high-MP bodies.</div>
   </div>
 
+  <!-- LOCATION -->
+  <div class="card">
+    <h2>Location</h2>
+    <div class="row">
+      <div class="field">
+        <label>Quick pick — major city</label>
+        <select id="citySelect">
+          <option value="">— Choose a city —</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Latitude</label>
+        <input type="number" id="locLat" step="0.0001" value="36.1699">
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="number" id="locLon" step="0.0001" value="-115.1398">
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="useDeviceLocation" style="flex:1">Use device location</button>
+    </div>
+    <div class="hint" id="locStatus" style="margin-top:6px"></div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Estimated light pollution</div>
+    <div class="moon-row">
+      <div class="moon-disc" id="lpDisc" style="background:var(--panel-2)"></div>
+      <div class="moon-info">
+        <b id="lpPct">–</b>
+        <span id="lpNearest">–</span>
+      </div>
+    </div>
+    <div id="lpBadge"></div>
+    <div class="hint" style="margin-top:8px">Estimated from distance to major cities in a bundled list of ~200 — not measured sky-brightness data. Automatically sets the Sky brightness picker in the settings guide above; change it manually there any time if you know your actual skies better than this guess does.</div>
+  </div>
+
   <!-- SKY / MOON -->
   <div class="card">
     <h2>Tonight's sky</h2>
@@ -385,6 +438,10 @@
       <div class="field">
         <label>Date</label>
         <input type="date" id="skyDate">
+      </div>
+      <div class="field">
+        <label>Viewing time</label>
+        <input type="time" id="skyTime" value="22:00">
       </div>
     </div>
     <div class="moon-row">
@@ -395,7 +452,30 @@
       </div>
     </div>
     <div id="moonBadge"></div>
-    <div class="hint" style="margin-top:10px">Milky Way core season (Northern Hemisphere): roughly February–October, best contrast April–August, pre-dawn in spring shifting to evening by late summer.</div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Milky Way core</div>
+    <table class="rule-table">
+      <tr><td>Altitude at chosen time</td><td id="gcAltitude" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Verdict</td><td id="gcVerdict" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Sky dome — facing up, N at top</div>
+    <div id="skyDome"></div>
+    <div class="hint" style="margin-top:6px">Center = zenith (straight up), edge = horizon. Dots below the ring are below your horizon and not shown. This is a computed positional chart, not a photographic star field.</div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Best-placed constellations</div>
+    <div id="constellationList" class="hint"></div>
+  </div>
+
+  <!-- SKY THROUGH THE YEAR -->
+  <div class="card">
+    <h2>Sky through the year</h2>
+    <div class="hint">Milky Way core altitude at ~10pm local clock time, mid-month, at your chosen location.</div>
+    <div id="yearBars" style="display:flex;align-items:flex-end;gap:4px;height:90px;margin:14px 0 6px;"></div>
+    <div style="display:flex;gap:4px;margin-bottom:10px;" id="yearLabels"></div>
+    <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px" id="monthPicker"></div>
+    <div class="hint" style="margin-top:10px;color:var(--text);font-weight:600" id="monthTitle"></div>
+    <div class="hint" id="monthList" style="margin-top:4px"></div>
   </div>
 
   <!-- TIPS -->
@@ -753,6 +833,231 @@ els.skyDate.addEventListener('input', renderMoon);
   els.skyDate.value = today.toISOString().slice(0,10);
 })();
 
+// ---------- Location ----------
+let currentLat = 36.1699, currentLon = -115.1398;
+let userSetSkyBrightness = false;
+document.getElementById('skyBrightness').addEventListener('change', ()=>{ userSetSkyBrightness = true; });
+
+const citySelectEl = document.getElementById('citySelect');
+(function populateCities(){
+  const sorted = [...CITY_DATA].sort((a,b)=> a[0].localeCompare(b[0]));
+  sorted.forEach(([name, country, lat, lon]) => {
+    const opt = document.createElement('option');
+    opt.value = `${lat}|${lon}|${name}, ${country}`;
+    opt.textContent = `${name}, ${country}`;
+    citySelectEl.appendChild(opt);
+  });
+})();
+
+function setLocation(lat, lon, label){
+  currentLat = lat; currentLon = lon;
+  document.getElementById('locLat').value = lat.toFixed(4);
+  document.getElementById('locLon').value = lon.toFixed(4);
+  document.getElementById('locStatus').textContent = label || '';
+  refreshLightPollution();
+  renderSkyPanel();
+  renderYearView();
+  storageSet('location', JSON.stringify({lat, lon, label: label || ''}));
+}
+
+citySelectEl.addEventListener('change', ()=>{
+  if(!citySelectEl.value) return;
+  const [lat, lon, label] = citySelectEl.value.split('|');
+  setLocation(parseFloat(lat), parseFloat(lon), label);
+});
+['locLat','locLon'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=>{
+    citySelectEl.value = '';
+    const lat = parseFloat(document.getElementById('locLat').value);
+    const lon = parseFloat(document.getElementById('locLon').value);
+    if(isFinite(lat) && isFinite(lon)) setLocation(lat, lon, 'Custom location');
+  });
+});
+document.getElementById('useDeviceLocation').addEventListener('click', ()=>{
+  const statusEl = document.getElementById('locStatus');
+  if(!('geolocation' in navigator)){
+    statusEl.textContent = 'Geolocation not available on this device/browser.';
+    return;
+  }
+  statusEl.textContent = 'Locating…';
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      citySelectEl.value = '';
+      setLocation(pos.coords.latitude, pos.coords.longitude, 'Device location');
+    },
+    (err)=>{ statusEl.textContent = 'Could not get device location (' + err.message + '). Works offline if your device has GPS — falls back to needing network on some devices.'; },
+    { enableHighAccuracy:false, timeout:10000 }
+  );
+});
+
+function refreshLightPollution(){
+  const { pct, bucket, nearest } = estimateLightPollution(currentLat, currentLon);
+  document.getElementById('lpPct').textContent = pct + '% estimated light pollution';
+  document.getElementById('lpNearest').textContent = nearest
+    ? `Nearest major city: ${nearest.name}, ${nearest.dist.toFixed(0)} km away`
+    : '';
+  let badge = '';
+  if(pct < 10) badge = '<span class="badge good">Estimated pristine dark sky</span>';
+  else if(pct < 50) badge = '<span class="badge ok">Estimated moderate sky glow</span>';
+  else badge = '<span class="badge bad">Estimated significant light pollution</span>';
+  document.getElementById('lpBadge').innerHTML = badge;
+
+  if(!userSetSkyBrightness){
+    const skySel = document.getElementById('skyBrightness');
+    skySel.value = bucket;
+    renderScenario();
+  }
+}
+
+// ---------- Tonight's sky panel: Milky Way core, constellations, dome ----------
+function currentViewingDate(){
+  const dateVal = els.skyDate.value;
+  const timeVal = document.getElementById('skyTime').value || '22:00';
+  const [y,m,d] = (dateVal || new Date().toISOString().slice(0,10)).split('-').map(Number);
+  const [hh,mm] = timeVal.split(':').map(Number);
+  return new Date(y, m-1, d, hh, mm, 0);
+}
+
+function renderSkyPanel(){
+  const date = currentViewingDate();
+  const gc = altAz(GALACTIC_CENTER.ra, GALACTIC_CENTER.dec, currentLat, currentLon, date);
+  document.getElementById('gcAltitude').textContent = gc.altitude.toFixed(0) + '°';
+  let verdict, vClass;
+  if(gc.altitude > 20){ verdict = 'Visible, well placed'; vClass='good'; }
+  else if(gc.altitude > 0){ verdict = 'Low on horizon — hazy/obstructed likely'; vClass='ok'; }
+  else { verdict = 'Below horizon — not visible'; vClass='bad'; }
+  document.getElementById('gcVerdict').innerHTML = `<span class="badge ${vClass}" style="margin-top:0">${verdict}</span>`;
+
+  const results = CONSTELLATIONS.map(([name, ra, dec])=>{
+    const p = altAz(ra, dec, currentLat, currentLon, date);
+    return { name, ...p };
+  }).filter(r => r.altitude > 15).sort((a,b)=> b.altitude - a.altitude);
+
+  const listEl = document.getElementById('constellationList');
+  if(!results.length){
+    listEl.innerHTML = '<div class="empty">Nothing well-placed above 15° at this time — try a different hour.</div>';
+  } else {
+    listEl.innerHTML = results.slice(0,10).map(r=>
+      `<div class="const-row"><span>${r.name}</span><span style="font-family:var(--mono);color:var(--cyan)">${r.altitude.toFixed(0)}° ${compassLabel(r.azimuth)}</span></div>`
+    ).join('');
+  }
+
+  renderDome(results, gc);
+}
+
+function compassLabel(az){
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(az/22.5) % 16];
+}
+
+function renderDome(results, gc){
+  const size = 280, R = 120, cx = size/2, cy = size/2;
+  function pt(alt, az){
+    const r = R * (90 - alt) / 90;
+    const rad = az * Math.PI / 180;
+    return { x: cx + r*Math.sin(rad), y: cy - r*Math.cos(rad) };
+  }
+  let dots = '';
+  results.slice(0,25).forEach(r=>{
+    const p = pt(r.altitude, r.azimuth);
+    dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.4" fill="var(--cyan)" opacity="0.85"/>`;
+    dots += `<text x="${p.x.toFixed(1)}" y="${(p.y-5).toFixed(1)}" font-size="8" fill="var(--dim)" text-anchor="middle" font-family="var(--mono)">${r.name}</text>`;
+  });
+  let gcDot = '';
+  if(gc.altitude > 0){
+    const p = pt(gc.altitude, gc.azimuth);
+    gcDot = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--amber)"/>
+             <text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" font-size="9" fill="var(--amber)" text-anchor="middle" font-weight="600">MW core</text>`;
+  }
+  const svg = `
+    <svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+      <circle cx="${cx}" cy="${cy}" r="${R*0.667}" fill="none" stroke="var(--border)" stroke-width="1"/>
+      <circle cx="${cx}" cy="${cy}" r="${R*0.333}" fill="none" stroke="var(--border)" stroke-width="1"/>
+      <text x="${cx}" y="${cy-R-6}" font-size="11" fill="var(--dim)" text-anchor="middle" font-family="var(--mono)">N</text>
+      <text x="${cx}" y="${cy+R+14}" font-size="11" fill="var(--dim)" text-anchor="middle" font-family="var(--mono)">S</text>
+      <text x="${cx+R+10}" y="${cy+4}" font-size="11" fill="var(--dim)" text-anchor="middle" font-family="var(--mono)">E</text>
+      <text x="${cx-R-10}" y="${cy+4}" font-size="11" fill="var(--dim)" text-anchor="middle" font-family="var(--mono)">W</text>
+      ${dots}
+      ${gcDot}
+    </svg>`;
+  document.getElementById('skyDome').innerHTML = svg;
+}
+
+els.skyDate.addEventListener('input', renderSkyPanel);
+document.getElementById('skyTime').addEventListener('input', renderSkyPanel);
+
+// ---------- Sky through the year ----------
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let selectedMonth = new Date().getMonth();
+
+function renderYearView(){
+  const year = new Date().getFullYear();
+  const barsEl = document.getElementById('yearBars');
+  const labelsEl = document.getElementById('yearLabels');
+  const pickerEl = document.getElementById('monthPicker');
+  barsEl.innerHTML = ''; labelsEl.innerHTML = ''; pickerEl.innerHTML = '';
+
+  const altitudes = MONTH_NAMES.map((_, m)=>{
+    const d = new Date(year, m, 15, 22, 0, 0);
+    return altAz(GALACTIC_CENTER.ra, GALACTIC_CENTER.dec, currentLat, currentLon, d).altitude;
+  });
+  const maxAlt = Math.max(10, ...altitudes.map(a=>Math.max(a,0)));
+
+  MONTH_NAMES.forEach((name, m)=>{
+    const h = Math.max(2, (Math.max(altitudes[m],0)/maxAlt) * 84);
+    const bar = document.createElement('div');
+    bar.className = 'year-bar' + (m===selectedMonth ? ' active' : '');
+    bar.style.height = h + 'px';
+    bar.title = `${name}: ${altitudes[m].toFixed(0)}°`;
+    barsEl.appendChild(bar);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'year-bar-label';
+    lbl.textContent = name;
+    labelsEl.appendChild(lbl);
+
+    const btn = document.createElement('button');
+    btn.className = 'month-btn' + (m===selectedMonth ? ' active' : '');
+    btn.textContent = name;
+    btn.addEventListener('click', ()=>{ selectedMonth = m; renderYearView(); });
+    pickerEl.appendChild(btn);
+  });
+
+  const d = new Date(year, selectedMonth, 15, 22, 0, 0);
+  const gc = altAz(GALACTIC_CENTER.ra, GALACTIC_CENTER.dec, currentLat, currentLon, d);
+  const results = CONSTELLATIONS.map(([name, ra, dec])=>{
+    const p = altAz(ra, dec, currentLat, currentLon, d);
+    return { name, ...p };
+  }).filter(r=>r.altitude > 15).sort((a,b)=> b.altitude - a.altitude).slice(0,8);
+
+  document.getElementById('monthTitle').textContent =
+    `${MONTH_NAMES[selectedMonth]} 15, ~10pm local — Milky Way core at ${gc.altitude.toFixed(0)}°`;
+  document.getElementById('monthList').textContent = results.length
+    ? 'Best placed: ' + results.map(r=>r.name).join(', ')
+    : 'Nothing well-placed above 15° at this hour.';
+}
+
+// Restore saved location, then do the first render. Called from Init below,
+// after the storage layer (storageGet/storageSet) is defined.
+async function initLocation(){
+  try{
+    const raw = await storageGet('location');
+    if(raw){
+      const loc = JSON.parse(raw);
+      if(isFinite(loc.lat) && isFinite(loc.lon)){
+        currentLat = loc.lat; currentLon = loc.lon;
+        document.getElementById('locLat').value = loc.lat.toFixed(4);
+        document.getElementById('locLon').value = loc.lon.toFixed(4);
+        if(loc.label) document.getElementById('locStatus').textContent = loc.label;
+      }
+    }
+  }catch(e){ /* no saved location yet, defaults stand */ }
+  refreshLightPollution();
+  renderSkyPanel();
+  renderYearView();
+}
+
 // ---------- Presets (local, per-device storage) ----------
 // Uses Claude's window.storage when previewed inside Claude (needs network).
 // Falls back to real browser localStorage when opened as a plain file on-device (works fully offline).
@@ -880,6 +1185,7 @@ els.savePreset.addEventListener('click', async ()=>{
 recalc();
 renderMoon();
 renderPresets();
+initLocation();
 
 // ---------- Platform-aware install banner ----------
 (function installBanner(){

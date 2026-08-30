@@ -1,8 +1,9 @@
-const CACHE_NAME = 'npf-field-v4';
+const CACHE_NAME = 'npf-field-v5';
 const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.json',
+  './sky-data.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'
