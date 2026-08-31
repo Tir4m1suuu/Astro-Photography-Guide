@@ -196,7 +196,57 @@ function haversineKm(lat1, lon1, lat2, lon2){
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// ---------- Light pollution heuristic ----------
+// ---------- US National Parks ----------
+// [name, state(s), lat, lon] — approximate coordinates of each park's
+// general area (not a specific overlook). Astrophotographers commonly use
+// these as darker-sky location presets; the same distance-from-cities
+// heuristic below runs against these coordinates just like any other point.
+const NATIONAL_PARKS = [
+["Acadia","ME",44.35,-68.21],["American Samoa","AS",-14.25,-170.68],
+["Arches","UT",38.73,-109.59],["Badlands","SD",43.75,-102.50],
+["Big Bend","TX",29.25,-103.25],["Biscayne","FL",25.49,-80.21],
+["Black Canyon of the Gunnison","CO",38.58,-107.72],["Bryce Canyon","UT",37.59,-112.19],
+["Canyonlands","UT",38.30,-109.90],["Capitol Reef","UT",38.37,-111.26],
+["Carlsbad Caverns","NM",32.17,-104.44],["Channel Islands","CA",34.01,-119.42],
+["Congaree","SC",33.78,-80.78],["Crater Lake","OR",42.90,-122.10],
+["Cuyahoga Valley","OH",41.24,-81.55],["Death Valley","CA",36.50,-117.10],
+["Denali","AK",63.10,-151.00],["Dry Tortugas","FL",24.63,-82.87],
+["Everglades","FL",25.29,-80.90],["Gates of the Arctic","AK",67.78,-153.30],
+["Gateway Arch","MO",38.63,-90.19],["Glacier","MT",48.70,-113.80],
+["Glacier Bay","AK",58.50,-137.00],["Grand Canyon","AZ",36.06,-112.14],
+["Grand Teton","WY",43.79,-110.68],["Great Basin","NV",39.00,-114.22],
+["Great Sand Dunes","CO",37.73,-105.51],["Great Smoky Mountains","TN/NC",35.68,-83.53],
+["Guadalupe Mountains","TX",31.92,-104.87],["Haleakalā","HI",20.72,-156.17],
+["Hawaii Volcanoes","HI",19.38,-155.20],["Hot Springs","AR",34.51,-93.05],
+["Indiana Dunes","IN",41.65,-87.05],["Isle Royale","MI",48.10,-88.55],
+["Joshua Tree","CA",33.87,-115.90],["Katmai","AK",58.60,-155.00],
+["Kenai Fjords","AK",59.90,-149.65],["Kings Canyon","CA",36.80,-118.55],
+["Kobuk Valley","AK",67.55,-159.28],["Lake Clark","AK",60.97,-153.42],
+["Lassen Volcanic","CA",40.49,-121.42],["Mammoth Cave","KY",37.19,-86.10],
+["Mesa Verde","CO",37.18,-108.49],["Mount Rainier","WA",46.85,-121.75],
+["New River Gorge","WV",37.90,-81.07],["North Cascades","WA",48.70,-121.20],
+["Olympic","WA",47.80,-123.60],["Petrified Forest","AZ",34.90,-109.80],
+["Pinnacles","CA",36.48,-121.16],["Redwood","CA",41.20,-124.00],
+["Rocky Mountain","CO",40.30,-105.70],["Saguaro","AZ",32.25,-110.50],
+["Sequoia","CA",36.49,-118.57],["Shenandoah","VA",38.53,-78.35],
+["Theodore Roosevelt","ND",46.97,-103.45],["Virgin Islands","VI",18.33,-64.73],
+["Voyageurs","MN",48.50,-92.88],["White Sands","NM",32.78,-106.17],
+["Wind Cave","SD",43.57,-103.48],["Wrangell-St Elias","AK",61.00,-142.00],
+["Yellowstone","WY/MT/ID",44.60,-110.50],["Yosemite","CA",37.75,-119.50],
+["Zion","UT",37.30,-113.05]
+];
+
+// ---------- Star trail rate ----------
+// Sidereal angular rate at the celestial equator, arcsec/sec.
+const SIDEREAL_RATE_ARCSEC_S = 15.0410;
+// A star's trail rate falls off with cos(declination) — stars near a
+// celestial pole trace tight arcs, stars near the celestial equator trail
+// at the full rate. This is standard spherical astronomy, the same
+// declination term used in extended NPF-rule derivations.
+function starTrailArcsec(decDeg, seconds){
+  return SIDEREAL_RATE_ARCSEC_S * seconds * Math.cos(decDeg * Math.PI / 180);
+}
+
 // Distance-and-population proxy, NOT measured sky brightness. Returns a
 // bucket matching the app's existing SKY_EV_BASE keys, plus the nearest
 // city for transparency about how the estimate was derived.

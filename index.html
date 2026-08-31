@@ -120,6 +120,18 @@
     font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
     color:var(--dim);margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;
   }
+  details.card{padding:0;overflow:hidden;}
+  details.card > summary{
+    list-style:none;cursor:pointer;padding:16px;display:flex;align-items:center;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);
+  }
+  details.card > summary::-webkit-details-marker{display:none;}
+  details.card > summary::after{
+    content:'+';font-size:16px;color:var(--dim);font-family:var(--sans);line-height:1;margin-left:8px;
+  }
+  details.card[open] > summary::after{content:'–';}
+  details.card > summary h2{margin:0;padding:0;}
+  details.card > .details-body{padding:0 16px 16px;}
   .row{display:flex;gap:10px;margin-bottom:10px;}
   .field{flex:1;display:flex;flex-direction:column;gap:6px;}
   .field label{font-size:12px;color:var(--dim);}
@@ -320,8 +332,9 @@
   </div>
 
   <!-- CAMERA SETTINGS GUIDE -->
-  <div class="card">
-    <h2>Camera settings guide</h2>
+  <details class="card" open>
+    <summary><h2>Camera settings guide</h2></summary>
+    <div class="details-body">
     <div class="row">
       <div class="field">
         <label>What are you shooting?</label>
@@ -366,11 +379,32 @@
       <tr><td>Metering</td><td>Doesn't matter — you're in Manual</td></tr>
       <tr><td>Flash</td><td>Off</td></tr>
     </table>
-  </div>
+    </div>
+  </details>
+
+  <!-- STAR TRAIL PREVIEW -->
+  <details class="card">
+    <summary><h2>Star trail preview</h2></summary>
+    <div class="details-body">
+    <div class="row">
+      <div class="field">
+        <label>Exposure to preview (seconds)</label>
+        <input type="number" id="trailSeconds" step="1" value="13">
+      </div>
+      <div class="field">
+        <label></label>
+        <button class="btn ghost" id="trailUseNPF" style="margin-top:6px">Use NPF result</button>
+      </div>
+    </div>
+    <div id="trailSvgWrap"></div>
+    <div class="hint" style="margin-top:8px">Same exposure, three points in the sky — trailing depends on <i>where you point</i>, not just how long you expose. Stars near a celestial pole trace tight arcs; stars near the celestial equator (and the Milky Way core, close to it) trail fastest. Shapes are illustrative; the numbers next to each are the real computed values for your current gear.</div>
+    </div>
+  </details>
 
   <!-- SAVED PRESETS -->
-  <div class="card">
-    <h2>Saved presets <span id="presetCount" style="color:var(--dim);font-weight:400"></span></h2>
+  <details class="card">
+    <summary><h2>Saved presets <span id="presetCount" style="color:var(--dim);font-weight:400"></span></h2></summary>
+    <div class="details-body">
     <div id="presetList"><div class="empty">No presets saved yet.</div></div>
     <div class="hint" id="storageStatus" style="margin-top:8px"></div>
     <div class="row" style="margin-top:12px">
@@ -379,11 +413,13 @@
       <input type="file" id="importPresetsFile" accept="application/json" style="display:none">
     </div>
     <div class="hint" style="margin-top:6px">iOS can clear site storage after ~7 days unopened — export a backup occasionally if you rely on saved presets.</div>
-  </div>
+    </div>
+  </details>
 
   <!-- RULE COMPARISON -->
-  <div class="card">
-    <h2>Rule comparison</h2>
+  <details class="card">
+    <summary><h2>Rule comparison</h2></summary>
+    <div class="details-body">
     <table class="rule-table">
       <tr><th>Rule</th><th>Formula</th><th>Result</th></tr>
       <tr><td>NPF</td><td>(35N+30p)/f</td><td id="rNPF">–</td></tr>
@@ -391,14 +427,16 @@
       <tr><td>300</td><td>300/(f·crop)</td><td id="r300">–</td></tr>
     </table>
     <div class="hint" style="margin-top:10px">500/300 are legacy full-frame-era rules of thumb. NPF accounts for your actual sensor resolution and aperture — trust it over 500/300 on modern high-MP bodies.</div>
-  </div>
+    </div>
+  </details>
 
   <!-- LOCATION -->
-  <div class="card">
-    <h2>Location</h2>
+  <details class="card">
+    <summary><h2>Location</h2></summary>
+    <div class="details-body">
     <div class="row">
       <div class="field">
-        <label>Quick pick — major city</label>
+        <label>Quick pick — national park or city</label>
         <select id="citySelect">
           <option value="">— Choose a city —</option>
         </select>
@@ -429,11 +467,13 @@
     </div>
     <div id="lpBadge"></div>
     <div class="hint" style="margin-top:8px">Estimated from distance to major cities in a bundled list of ~200 — not measured sky-brightness data. Automatically sets the Sky brightness picker in the settings guide above; change it manually there any time if you know your actual skies better than this guess does.</div>
-  </div>
+    </div>
+  </details>
 
   <!-- SKY / MOON -->
-  <div class="card">
-    <h2>Tonight's sky</h2>
+  <details class="card">
+    <summary><h2>Tonight's sky</h2></summary>
+    <div class="details-body">
     <div class="row">
       <div class="field">
         <label>Date</label>
@@ -465,22 +505,26 @@
 
     <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Best-placed constellations</div>
     <div id="constellationList" class="hint"></div>
-  </div>
+    </div>
+  </details>
 
   <!-- SKY THROUGH THE YEAR -->
-  <div class="card">
-    <h2>Sky through the year</h2>
+  <details class="card">
+    <summary><h2>Sky through the year</h2></summary>
+    <div class="details-body">
     <div class="hint">Milky Way core altitude at ~10pm local clock time, mid-month, at your chosen location.</div>
     <div id="yearBars" style="display:flex;align-items:flex-end;gap:4px;height:90px;margin:14px 0 6px;"></div>
     <div style="display:flex;gap:4px;margin-bottom:10px;" id="yearLabels"></div>
     <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px" id="monthPicker"></div>
     <div class="hint" style="margin-top:10px;color:var(--text);font-weight:600" id="monthTitle"></div>
     <div class="hint" id="monthList" style="margin-top:4px"></div>
-  </div>
+    </div>
+  </details>
 
   <!-- TIPS -->
-  <div class="card">
-    <h2>Field suggestions</h2>
+  <details class="card">
+    <summary><h2>Field suggestions</h2></summary>
+    <div class="details-body">
     <ul class="tips">
       <li>Focus manually at infinity using live-view zoomed on a bright star, not the lens's hard stop.</li>
       <li>Shoot 1 stop down from wide-open if coma/astigmatism smears corner stars — e.g. f/2.8 lens at f/3.2–f/4.</li>
@@ -490,7 +534,8 @@
       <li>Widest aperture your lens allows (low f-number) trades some corner sharpness for shorter, trail-free exposures — worth it for star points.</li>
       <li>Whichever exposure time you land on, take a test frame and zoom to 100% on a corner star to confirm no trailing before committing to a sequence.</li>
     </ul>
-  </div>
+    </div>
+  </details>
 
   <div class="footer-note" id="footerNote">
     All calculations run locally — no network call at compute time.<br>
@@ -634,6 +679,7 @@ function recalc(){
   `;
 
   if(document.getElementById('scenarioSelect')) renderScenario();
+  if(document.getElementById('trailSvgWrap')) renderTrailPreview();
 }
 
 ['sensorSelect','customWidth','megapixels','focalLength','aperture'].forEach(id=>{
@@ -760,6 +806,69 @@ function renderScenario(){
 document.getElementById('scenarioSelect').addEventListener('change', renderScenario);
 document.getElementById('skyBrightness').addEventListener('change', renderScenario);
 
+// ---------- Star trail preview ----------
+// Three representative declinations: near a celestial pole, mid-sky, and
+// the celestial equator (the worst case for trailing at a given exposure).
+const TRAIL_SAMPLES = [
+  { label: 'Near celestial pole', dec: 75 },
+  { label: 'Mid-sky', dec: 40 },
+  { label: 'Celestial equator', dec: 0 }
+];
+
+function renderTrailPreview(){
+  const t = parseFloat(document.getElementById('trailSeconds').value) || 0;
+  const f = parseFloat(els.focalLength.value) || 0;
+  const pitch = parseFloat(els.pixelPitch.value) || 0;
+  const wrap = document.getElementById('trailSvgWrap');
+  if(t <= 0 || f <= 0 || pitch <= 0){
+    wrap.innerHTML = '<div class="empty">Enter gear + an exposure time above to preview.</div>';
+    return;
+  }
+  const pxScaleArcsecPerPx = (pitch / f) * 206.265;
+
+  const boxW = 92, boxH = 92, gap = 10;
+  const totalW = boxW * 3 + gap * 2;
+  const maxDisplayPx = 34; // longest trail we'll draw at full box scale
+
+  let svg = `<svg viewBox="0 0 ${totalW} 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">`;
+  TRAIL_SAMPLES.forEach((s, i)=>{
+    const x0 = i * (boxW + gap);
+    const cx = x0 + boxW/2, cy = 50;
+    const trailArcsec = starTrailArcsec(s.dec, t);
+    const trailPxReal = trailArcsec / pxScaleArcsecPerPx;
+    const dispLen = Math.max(3, Math.min(maxDisplayPx, trailPxReal * 0.6 + 4));
+    // curvature: 0 at equator (straight), higher near the pole (arced)
+    const curveFactor = Math.sin(s.dec * Math.PI/180);
+    const half = dispLen/2;
+    const x1 = cx - half, x2 = cx + half;
+    const bendY = cy - curveFactor * (dispLen*0.35);
+
+    let color, verdict;
+    if(trailPxReal < 1.5){ color = '#7FE0A0'; verdict='crisp'; }
+    else if(trailPxReal < 4){ color = 'var(--amber)'; verdict='soft'; }
+    else { color = 'var(--danger)'; verdict='trailed'; }
+
+    svg += `
+      <rect x="${x0}" y="10" width="${boxW}" height="${boxH}" rx="8" fill="var(--panel-2)" stroke="var(--border)"/>
+      <path d="M ${x1} ${cy} Q ${cx} ${bendY} ${x2} ${cy}" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="${x2}" cy="${cy}" r="2" fill="${color}"/>
+      <text x="${cx}" y="118" font-size="9" fill="var(--dim)" text-anchor="middle" font-family="var(--mono)">${s.label}</text>
+      <text x="${cx}" y="${cy+22}" font-size="9" fill="${color}" text-anchor="middle" font-family="var(--mono)">${trailPxReal.toFixed(1)}px · ${verdict}</text>
+    `;
+  });
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+}
+document.getElementById('trailSeconds').addEventListener('input', renderTrailPreview);
+document.getElementById('trailUseNPF').addEventListener('click', ()=>{
+  const npfVal = parseFloat(els.rNPF.textContent);
+  if(isFinite(npfVal)){
+    document.getElementById('trailSeconds').value = npfVal.toFixed(1);
+    renderTrailPreview();
+  }
+});
+
+
 
 els.cameraProfile.addEventListener('change', ()=>{
   const key = els.cameraProfile.value;
@@ -840,13 +949,25 @@ document.getElementById('skyBrightness').addEventListener('change', ()=>{ userSe
 
 const citySelectEl = document.getElementById('citySelect');
 (function populateCities(){
-  const sorted = [...CITY_DATA].sort((a,b)=> a[0].localeCompare(b[0]));
-  sorted.forEach(([name, country, lat, lon]) => {
+  const parkGroup = document.createElement('optgroup');
+  parkGroup.label = 'US National Parks';
+  [...NATIONAL_PARKS].sort((a,b)=> a[0].localeCompare(b[0])).forEach(([name, state, lat, lon])=>{
+    const opt = document.createElement('option');
+    opt.value = `${lat}|${lon}|${name} NP, ${state}`;
+    opt.textContent = `${name} (${state})`;
+    parkGroup.appendChild(opt);
+  });
+  citySelectEl.appendChild(parkGroup);
+
+  const cityGroup = document.createElement('optgroup');
+  cityGroup.label = 'Major cities';
+  [...CITY_DATA].sort((a,b)=> a[0].localeCompare(b[0])).forEach(([name, country, lat, lon]) => {
     const opt = document.createElement('option');
     opt.value = `${lat}|${lon}|${name}, ${country}`;
     opt.textContent = `${name}, ${country}`;
-    citySelectEl.appendChild(opt);
+    cityGroup.appendChild(opt);
   });
+  citySelectEl.appendChild(cityGroup);
 })();
 
 function setLocation(lat, lon, label){
@@ -1186,6 +1307,7 @@ recalc();
 renderMoon();
 renderPresets();
 initLocation();
+renderTrailPreview();
 
 // ---------- Platform-aware install banner ----------
 (function installBanner(){
