@@ -1,7 +1,7 @@
 {
-  "name": "NPF Field — Astro Exposure Calculator",
-  "short_name": "NPF Field",
-  "description": "Offline NPF/500/300 rule astrophotography exposure calculator with gear presets and moon phase.",
+  "name": "DarkSky Guide — Astro Exposure Calculator",
+  "short_name": "DarkSky Guide",
+  "description": "Offline light pollution, star trail, framing, and twilight planner for astrophotography.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

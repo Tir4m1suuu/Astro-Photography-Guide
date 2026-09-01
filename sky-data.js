@@ -196,6 +196,102 @@ function haversineKm(lat1, lon1, lat2, lon2){
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// ---------- Sun position (low-precision solar ephemeris) ----------
+// Standard low-precision formula (Astronomical Almanac-style), accurate to
+// roughly an arcminute — more than enough for twilight timing. Returns
+// { ra (hours), dec (degrees) } for a given JS Date.
+function sunEquatorial(date){
+  const jd = toJulianDate(date);
+  const n = jd - 2451545.0;
+  const L = (280.460 + 0.9856474 * n) % 360;
+  const g = ((357.528 + 0.9856003 * n) % 360) * Math.PI / 180;
+  const lambda = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2*g)) * Math.PI / 180;
+  const epsilon = (23.439 - 0.0000004 * n) * Math.PI / 180;
+  const ra = Math.atan2(Math.cos(epsilon) * Math.sin(lambda), Math.cos(lambda));
+  const dec = Math.asin(Math.sin(epsilon) * Math.sin(lambda));
+  let raHours = (ra * 180/Math.PI) / 15;
+  if(raHours < 0) raHours += 24;
+  return { ra: raHours, dec: dec * 180/Math.PI };
+}
+function sunAltitude(date, lat, lon){
+  const s = sunEquatorial(date);
+  return altAz(s.ra, s.dec, lat, lon, date).altitude;
+}
+
+// Finds sunset/sunrise + civil/nautical/astronomical dusk & dawn for the
+// local calendar day containing `date`, at the given location. Samples
+// altitude every 4 minutes across a 30-hour window centered on local
+// midnight, then linearly interpolates each threshold crossing. Returns an
+// object keyed by event name -> JS Date (or null if never crossed, e.g.
+// high-latitude summer).
+function findTwilightTimes(date, lat, lon){
+  const thresholds = [
+    ['sunset', -0.833, 'set'], ['civilDusk', -6, 'set'], ['nauticalDusk', -12, 'set'], ['astroDusk', -18, 'set'],
+    ['astroDawn', -18, 'rise'], ['nauticalDawn', -12, 'rise'], ['civilDawn', -6, 'rise'], ['sunrise', -0.833, 'rise']
+  ];
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), -3, 0, 0);
+  const stepMin = 4;
+  const steps = Math.floor(30 * 60 / stepMin);
+  const samples = [];
+  for(let i=0; i<=steps; i++){
+    const t = new Date(start.getTime() + i*stepMin*60000);
+    samples.push({ t, alt: sunAltitude(t, lat, lon) });
+  }
+  const results = {};
+  thresholds.forEach(([key, thresh, dir])=>{
+    let found = null;
+    for(let i=0; i<samples.length-1; i++){
+      const a = samples[i], b = samples[i+1];
+      const crossing = (dir === 'set') ? (a.alt >= thresh && b.alt < thresh) : (a.alt < thresh && b.alt >= thresh);
+      if(crossing){
+        const frac = (thresh - a.alt) / (b.alt - a.alt);
+        found = new Date(a.t.getTime() + frac * (b.t.getTime() - a.t.getTime()));
+        break;
+      }
+    }
+    results[key] = found;
+  });
+  return results;
+}
+
+// Country -> broad region, used to group the city picker so it's not one
+// giant alphabetical list. Order below also sets the group display order.
+const REGION_ORDER = ['North America','Europe','East Asia','South Asia','Southeast Asia',
+  'Middle East','Africa','South America','Central America & Caribbean','Oceania','Central Asia'];
+const COUNTRY_REGION = {
+  "USA":"North America","Canada":"North America",
+  "UK":"Europe","France":"Europe","Germany":"Europe","Italy":"Europe","Spain":"Europe",
+  "Netherlands":"Europe","Belgium":"Europe","Austria":"Europe","Switzerland":"Europe",
+  "Poland":"Europe","Czechia":"Europe","Hungary":"Europe","Greece":"Europe","Portugal":"Europe",
+  "Ireland":"Europe","Denmark":"Europe","Sweden":"Europe","Norway":"Europe","Finland":"Europe",
+  "Iceland":"Europe","Ukraine":"Europe","Romania":"Europe","Bulgaria":"Europe","Serbia":"Europe",
+  "Russia":"Europe",
+  "China":"East Asia","Japan":"East Asia","South Korea":"East Asia","Taiwan":"East Asia",
+  "Mongolia":"East Asia",
+  "India":"South Asia","Pakistan":"South Asia","Bangladesh":"South Asia","Sri Lanka":"South Asia",
+  "Nepal":"South Asia",
+  "Indonesia":"Southeast Asia","Philippines":"Southeast Asia","Thailand":"Southeast Asia",
+  "Vietnam":"Southeast Asia","Malaysia":"Southeast Asia","Singapore":"Southeast Asia",
+  "Myanmar":"Southeast Asia","Cambodia":"Southeast Asia",
+  "Turkey":"Middle East","Iran":"Middle East","Iraq":"Middle East","Saudi Arabia":"Middle East",
+  "UAE":"Middle East","Qatar":"Middle East","Kuwait":"Middle East","Oman":"Middle East",
+  "Jordan":"Middle East","Lebanon":"Middle East","Israel":"Middle East",
+  "Egypt":"Africa","Nigeria":"Africa","South Africa":"Africa","Kenya":"Africa","Ethiopia":"Africa",
+  "DR Congo":"Africa","Tanzania":"Africa","Uganda":"Africa","Ghana":"Africa","Ivory Coast":"Africa",
+  "Senegal":"Africa","Algeria":"Africa","Morocco":"Africa","Tunisia":"Africa","Sudan":"Africa",
+  "Angola":"Africa",
+  "Brazil":"South America","Argentina":"South America","Colombia":"South America","Peru":"South America",
+  "Chile":"South America","Ecuador":"South America","Bolivia":"South America","Paraguay":"South America",
+  "Uruguay":"South America","Venezuela":"South America",
+  "Mexico":"Central America & Caribbean","Panama":"Central America & Caribbean",
+  "Costa Rica":"Central America & Caribbean","Cuba":"Central America & Caribbean",
+  "Dominican Republic":"Central America & Caribbean","Jamaica":"Central America & Caribbean",
+  "Guatemala":"Central America & Caribbean","El Salvador":"Central America & Caribbean",
+  "Australia":"Oceania","New Zealand":"Oceania",
+  "Kazakhstan":"Central Asia","Uzbekistan":"Central Asia","Azerbaijan":"Central Asia",
+  "Georgia":"Central Asia","Armenia":"Central Asia"
+};
+
 // ---------- US National Parks ----------
 // [name, state(s), lat, lon] — approximate coordinates of each park's
 // general area (not a specific overlook). Astrophotographers commonly use

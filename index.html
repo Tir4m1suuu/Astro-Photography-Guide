@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>NPF Field — Astro Exposure Calculator</title>
+<title>DarkSky Guide — Astro Exposure Calculator</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#06070C">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NPF Field">
+<meta name="apple-mobile-web-app-title" content="DarkSky Guide">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <script src="sky-data.js"></script>
@@ -200,6 +200,23 @@
   #skyDome svg{width:100%;height:auto;display:block;}
   .const-row{display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--border);}
   .const-row:first-child{border-top:none;}
+  .swatch{
+    width:36px;height:36px;border-radius:50%;border:2px solid var(--border);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .swatch.active{border-color:var(--text);}
+  .swatch.active::after{content:'✓';color:#06070C;font-weight:700;font-size:14px;}
+  .toast{
+    position:fixed;left:16px;right:16px;bottom:16px;max-width:488px;margin:0 auto;
+    background:var(--panel-2);border:1px solid var(--cyan);border-radius:11px;padding:12px 14px;
+    font-size:13px;color:var(--text);z-index:50;display:flex;justify-content:space-between;align-items:center;gap:10px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  }
+  .toast button{background:transparent;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:0 4px;}
+  .compare-row{border-top:1px solid var(--border);padding:10px 0;font-size:12.5px;}
+  .compare-row:first-child{border-top:none;}
+  .compare-row .compare-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .compare-row .compare-head b{font-size:13px;}
 </style>
 </head>
 <body>
@@ -208,7 +225,7 @@
   <header>
     <div class="brand">
       <span class="kicker">Prototype · iOS + Android</span>
-      <h1>NPF Field</h1>
+      <h1>DarkSky Guide</h1>
     </div>
     <div class="nv-toggle" id="nvToggle"><span class="dot"></span> Night Vision</div>
   </header>
@@ -331,8 +348,37 @@
     <button class="btn" id="savePreset">Save gear preset</button>
   </div>
 
+  <!-- FRAMING & PANORAMA -->
+  <details class="card" data-key="framing">
+    <summary><h2>Framing &amp; panorama</h2></summary>
+    <div class="details-body">
+    <table class="rule-table">
+      <tr><td>Horizontal FOV</td><td id="fovH" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Vertical FOV</td><td id="fovV" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Diagonal FOV</td><td id="fovD" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="hint" style="margin-top:8px">The Milky Way's bright core region spans roughly 30–40° — compare that to your diagonal FOV above to see if it fits in one frame or needs a panorama.</div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Panorama tile calculator</div>
+    <div class="row">
+      <div class="field">
+        <label>Target width (°)</label>
+        <input type="number" id="panoWidth" step="1" value="90">
+      </div>
+      <div class="field">
+        <label>Overlap (%)</label>
+        <input type="number" id="panoOverlap" step="1" value="25">
+      </div>
+    </div>
+    <table class="rule-table">
+      <tr><td>Tiles needed</td><td id="panoTiles" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Pan between tiles</td><td id="panoStep" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    </div>
+  </details>
+
   <!-- CAMERA SETTINGS GUIDE -->
-  <details class="card" open>
+  <details class="card" open data-key="settings">
     <summary><h2>Camera settings guide</h2></summary>
     <div class="details-body">
     <div class="row">
@@ -383,7 +429,7 @@
   </details>
 
   <!-- STAR TRAIL PREVIEW -->
-  <details class="card">
+  <details class="card" data-key="trails">
     <summary><h2>Star trail preview</h2></summary>
     <div class="details-body">
     <div class="row">
@@ -401,8 +447,50 @@
     </div>
   </details>
 
+  <!-- INTERVALOMETER PLANNER -->
+  <details class="card" data-key="intervalometer">
+    <summary><h2>Intervalometer planner</h2></summary>
+    <div class="details-body">
+    <div class="row">
+      <div class="field">
+        <label>Sub-exposure length (s)</label>
+        <input type="number" id="ivSubLength" step="1" value="20">
+      </div>
+      <div class="field">
+        <label>Buffer/write gap (s)</label>
+        <input type="number" id="ivGap" step="0.1" value="1">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Plan by</label>
+        <select id="ivMode">
+          <option value="duration">Total shoot duration</option>
+          <option value="frames">Number of frames</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="ivInputLabel">Total duration (min)</label>
+        <input type="number" id="ivInputValue" step="1" value="120">
+      </div>
+    </div>
+    <table class="rule-table">
+      <tr><td>Frame count</td><td id="ivFrames" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Actual elapsed time</td><td id="ivElapsed" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Estimated storage</td><td id="ivStorage" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label>RAW file size (MB, approx)</label>
+        <input type="number" id="ivFileSize" step="1" value="30">
+      </div>
+    </div>
+    <div class="hint" style="margin-top:6px">Buffer/write gap is your camera's time to write each RAW to card before the next shot can start — check your actual interval against a short test burst, since it varies by camera and card speed.</div>
+    </div>
+  </details>
+
   <!-- SAVED PRESETS -->
-  <details class="card">
+  <details class="card" data-key="presets">
     <summary><h2>Saved presets <span id="presetCount" style="color:var(--dim);font-weight:400"></span></h2></summary>
     <div class="details-body">
     <div id="presetList"><div class="empty">No presets saved yet.</div></div>
@@ -417,7 +505,7 @@
   </details>
 
   <!-- RULE COMPARISON -->
-  <details class="card">
+  <details class="card" data-key="rules">
     <summary><h2>Rule comparison</h2></summary>
     <div class="details-body">
     <table class="rule-table">
@@ -431,7 +519,7 @@
   </details>
 
   <!-- LOCATION -->
-  <details class="card">
+  <details class="card" data-key="location">
     <summary><h2>Location</h2></summary>
     <div class="details-body">
     <div class="row">
@@ -470,8 +558,30 @@
     </div>
   </details>
 
+  <!-- TWILIGHT TIMES -->
+  <details class="card" data-key="twilight">
+    <summary><h2>Twilight times</h2></summary>
+    <div class="details-body">
+    <div class="hint">For the date set in Tonight's Sky below, at your chosen location.</div>
+    <table class="rule-table" style="margin-top:8px">
+      <tr><td>Sunset</td><td id="twSunset" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Civil dusk</td><td id="twCivilDusk" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Nautical dusk</td><td id="twNauticalDusk" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Astronomical dusk</td><td id="twAstroDusk" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="badge good" id="twDarkWindow" style="margin-top:10px;display:block">–</div>
+    <table class="rule-table" style="margin-top:10px">
+      <tr><td>Astronomical dawn</td><td id="twAstroDawn" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Nautical dawn</td><td id="twNauticalDawn" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Civil dawn</td><td id="twCivilDawn" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Sunrise</td><td id="twSunrise" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="hint" style="margin-top:8px">Astronomical dusk/dawn (sun 18° below horizon) is when the sky is truly dark for faint targets — the window between them is your best Milky Way/deep-sky time. Civil/nautical are useful for packing up or planning drive time. Computed from real solar position, not a fixed offset from sunset.</div>
+    </div>
+  </details>
+
   <!-- SKY / MOON -->
-  <details class="card">
+  <details class="card" data-key="tonight">
     <summary><h2>Tonight's sky</h2></summary>
     <div class="details-body">
     <div class="row">
@@ -509,7 +619,7 @@
   </details>
 
   <!-- SKY THROUGH THE YEAR -->
-  <details class="card">
+  <details class="card" data-key="year">
     <summary><h2>Sky through the year</h2></summary>
     <div class="details-body">
     <div class="hint">Milky Way core altitude at ~10pm local clock time, mid-month, at your chosen location.</div>
@@ -521,8 +631,18 @@
     </div>
   </details>
 
+  <!-- COMPARE NIGHTS -->
+  <details class="card" data-key="compare">
+    <summary><h2>Compare nights</h2></summary>
+    <div class="details-body">
+    <div class="hint">Save the currently-selected date + location as a candidate, then line up a few side by side to pick the best night for a trip.</div>
+    <button class="btn ghost" id="addComparison" style="margin-top:10px">Add current date + location</button>
+    <div id="comparisonList" style="margin-top:10px"><div class="empty">No candidate nights saved yet.</div></div>
+  </div>
+  </details>
+
   <!-- TIPS -->
-  <details class="card">
+  <details class="card" data-key="tips">
     <summary><h2>Field suggestions</h2></summary>
     <div class="details-body">
     <ul class="tips">
@@ -534,6 +654,18 @@
       <li>Widest aperture your lens allows (low f-number) trades some corner sharpness for shorter, trail-free exposures — worth it for star points.</li>
       <li>Whichever exposure time you land on, take a test frame and zoom to 100% on a corner star to confirm no trailing before committing to a sequence.</li>
     </ul>
+    </div>
+  </details>
+
+  <!-- APPEARANCE -->
+  <details class="card" data-key="appearance">
+    <summary><h2>Appearance</h2></summary>
+    <div class="details-body">
+    <div class="hint">Accent color, saved locally on this device. Night Vision mode (top right) and which sections you leave open/closed are remembered automatically too — nothing here needs a network connection.</div>
+    <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px">
+      <div id="accentSwatches" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+    </div>
+    <button class="btn ghost" id="resetAppearance" style="margin-top:14px">Reset to default</button>
     </div>
   </details>
 
@@ -680,7 +812,50 @@ function recalc(){
 
   if(document.getElementById('scenarioSelect')) renderScenario();
   if(document.getElementById('trailSvgWrap')) renderTrailPreview();
+  if(document.getElementById('fovH')) renderFOV(sensor, f);
 }
+
+// ---------- Field of view + panorama ----------
+let currentFovH = 0;
+function renderFOV(sensor, focalLength){
+  if(!focalLength || focalLength <= 0){
+    ['fovH','fovV','fovD'].forEach(id => document.getElementById(id).textContent = '–');
+    currentFovH = 0;
+    return;
+  }
+  const w = sensor.width;
+  const h = sensor.width / sensor.aspect;
+  const diag = Math.sqrt(w*w + h*h);
+  const fovH = 2 * Math.atan(w / (2*focalLength)) * 180/Math.PI;
+  const fovV = 2 * Math.atan(h / (2*focalLength)) * 180/Math.PI;
+  const fovD = 2 * Math.atan(diag / (2*focalLength)) * 180/Math.PI;
+  document.getElementById('fovH').textContent = fovH.toFixed(1) + '°';
+  document.getElementById('fovV').textContent = fovV.toFixed(1) + '°';
+  document.getElementById('fovD').textContent = fovD.toFixed(1) + '°';
+  currentFovH = fovH;
+  renderPanorama();
+}
+function renderPanorama(){
+  const fovH = currentFovH;
+  const target = parseFloat(document.getElementById('panoWidth').value) || 0;
+  const overlapPct = parseFloat(document.getElementById('panoOverlap').value) || 0;
+  const tilesEl = document.getElementById('panoTiles');
+  const stepEl = document.getElementById('panoStep');
+  if(!fovH || target <= 0){
+    tilesEl.textContent = '–'; stepEl.textContent = '–';
+    return;
+  }
+  const effectiveStep = fovH * (1 - overlapPct/100);
+  if(effectiveStep <= 0){
+    tilesEl.textContent = 'increase FOV or reduce overlap'; stepEl.textContent = '–';
+    return;
+  }
+  const tiles = Math.max(1, Math.ceil(target / effectiveStep));
+  tilesEl.textContent = tiles + (tiles===1 ? ' tile (fits in one frame)' : ' tiles');
+  stepEl.textContent = effectiveStep.toFixed(1) + '°';
+}
+document.getElementById('panoWidth').addEventListener('input', renderPanorama);
+document.getElementById('panoOverlap').addEventListener('input', renderPanorama);
 
 ['sensorSelect','customWidth','megapixels','focalLength','aperture'].forEach(id=>{
   document.getElementById(id).addEventListener('input', recalc);
@@ -868,6 +1043,51 @@ document.getElementById('trailUseNPF').addEventListener('click', ()=>{
   }
 });
 
+// ---------- Intervalometer planner ----------
+function renderIntervalometer(){
+  const sub = parseFloat(document.getElementById('ivSubLength').value) || 0;
+  const gap = parseFloat(document.getElementById('ivGap').value) || 0;
+  const mode = document.getElementById('ivMode').value;
+  const inputVal = parseFloat(document.getElementById('ivInputValue').value) || 0;
+  const fileSize = parseFloat(document.getElementById('ivFileSize').value) || 0;
+  const cycle = sub + gap;
+  if(cycle <= 0){
+    document.getElementById('ivFrames').textContent = '–';
+    document.getElementById('ivElapsed').textContent = '–';
+    document.getElementById('ivStorage').textContent = '–';
+    return;
+  }
+  let frames, totalSec;
+  if(mode === 'duration'){
+    totalSec = inputVal * 60;
+    frames = Math.max(0, Math.floor(totalSec / cycle));
+  } else {
+    frames = Math.max(0, Math.round(inputVal));
+    totalSec = frames * cycle;
+  }
+  document.getElementById('ivFrames').textContent = frames + ' frames';
+  const h = Math.floor(totalSec/3600), m = Math.round((totalSec%3600)/60);
+  document.getElementById('ivElapsed').textContent = (h>0 ? h+'h ' : '') + m + 'm';
+  const storageMB = frames * fileSize;
+  document.getElementById('ivStorage').textContent = storageMB > 1024
+    ? (storageMB/1024).toFixed(1) + ' GB' : storageMB.toFixed(0) + ' MB';
+}
+document.getElementById('ivMode').addEventListener('change', ()=>{
+  const label = document.getElementById('ivInputLabel');
+  const input = document.getElementById('ivInputValue');
+  if(document.getElementById('ivMode').value === 'duration'){
+    label.textContent = 'Total duration (min)';
+    input.value = 120;
+  } else {
+    label.textContent = 'Number of frames';
+    input.value = 300;
+  }
+  renderIntervalometer();
+});
+['ivSubLength','ivGap','ivInputValue','ivFileSize'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderIntervalometer);
+});
+
 
 
 els.cameraProfile.addEventListener('change', ()=>{
@@ -892,6 +1112,7 @@ els.cameraProfile.addEventListener('change', ()=>{
 // ---------- Night vision toggle ----------
 els.nvToggle.addEventListener('click', ()=>{
   document.body.classList.toggle('nv');
+  storageSet('nightVision', document.body.classList.contains('nv') ? '1' : '0');
 });
 
 // ---------- Moon phase ----------
@@ -950,7 +1171,7 @@ document.getElementById('skyBrightness').addEventListener('change', ()=>{ userSe
 const citySelectEl = document.getElementById('citySelect');
 (function populateCities(){
   const parkGroup = document.createElement('optgroup');
-  parkGroup.label = 'US National Parks';
+  parkGroup.label = '🏞 US National Parks';
   [...NATIONAL_PARKS].sort((a,b)=> a[0].localeCompare(b[0])).forEach(([name, state, lat, lon])=>{
     const opt = document.createElement('option');
     opt.value = `${lat}|${lon}|${name} NP, ${state}`;
@@ -959,15 +1180,25 @@ const citySelectEl = document.getElementById('citySelect');
   });
   citySelectEl.appendChild(parkGroup);
 
-  const cityGroup = document.createElement('optgroup');
-  cityGroup.label = 'Major cities';
-  [...CITY_DATA].sort((a,b)=> a[0].localeCompare(b[0])).forEach(([name, country, lat, lon]) => {
-    const opt = document.createElement('option');
-    opt.value = `${lat}|${lon}|${name}, ${country}`;
-    opt.textContent = `${name}, ${country}`;
-    cityGroup.appendChild(opt);
+  const byRegion = {};
+  CITY_DATA.forEach(([name, country, lat, lon])=>{
+    const region = COUNTRY_REGION[country] || 'Other';
+    (byRegion[region] = byRegion[region] || []).push([name, country, lat, lon]);
   });
-  citySelectEl.appendChild(cityGroup);
+  const orderedRegions = [...REGION_ORDER, ...Object.keys(byRegion).filter(r=>!REGION_ORDER.includes(r))];
+  orderedRegions.forEach(region=>{
+    const cities = byRegion[region];
+    if(!cities || !cities.length) return;
+    const group = document.createElement('optgroup');
+    group.label = region;
+    cities.sort((a,b)=> a[0].localeCompare(b[0])).forEach(([name, country, lat, lon])=>{
+      const opt = document.createElement('option');
+      opt.value = `${lat}|${lon}|${name}, ${country}`;
+      opt.textContent = `${name}, ${country}`;
+      group.appendChild(opt);
+    });
+    citySelectEl.appendChild(group);
+  });
 })();
 
 function setLocation(lat, lon, label){
@@ -1064,6 +1295,30 @@ function renderSkyPanel(){
   }
 
   renderDome(results, gc);
+  renderTwilight();
+}
+
+function renderTwilight(){
+  if(!document.getElementById('twSunset')) return;
+  const date = els.skyDate.value
+    ? new Date(...els.skyDate.value.split('-').map((v,i)=> i===1 ? Number(v)-1 : Number(v)))
+    : new Date();
+  const tw = findTwilightTimes(date, currentLat, currentLon);
+  const fmtT = (d)=> d ? d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '—';
+  const ids = {
+    sunset:'twSunset', civilDusk:'twCivilDusk', nauticalDusk:'twNauticalDusk', astroDusk:'twAstroDusk',
+    astroDawn:'twAstroDawn', nauticalDawn:'twNauticalDawn', civilDawn:'twCivilDawn', sunrise:'twSunrise'
+  };
+  Object.entries(ids).forEach(([key, id])=>{
+    document.getElementById(id).textContent = fmtT(tw[key]);
+  });
+  const windowEl = document.getElementById('twDarkWindow');
+  if(tw.astroDusk && tw.astroDawn){
+    const hrs = (tw.astroDawn - tw.astroDusk) / 3600000;
+    windowEl.textContent = `~${hrs.toFixed(1)}h of true astronomical darkness`;
+  } else {
+    windowEl.textContent = 'Sun stays within 18° of the horizon all night at this latitude/date — no full astronomical darkness.';
+  }
 }
 
 function compassLabel(az){
@@ -1238,6 +1493,144 @@ function renderStorageStatus(){
   else el.textContent = '';
 }
 
+// ---------- Section open/closed state, remembered per device ----------
+const accordions = [...document.querySelectorAll('details.card[data-key]')];
+async function restoreSectionState(){
+  try{
+    const raw = await storageGet('section-state');
+    if(!raw) return;
+    const state = JSON.parse(raw);
+    accordions.forEach(d=>{
+      const key = d.dataset.key;
+      if(key in state) d.open = !!state[key];
+    });
+  }catch(e){ /* defaults stand */ }
+}
+async function saveSectionState(){
+  const state = {};
+  accordions.forEach(d=>{ state[d.dataset.key] = d.open; });
+  await storageSet('section-state', JSON.stringify(state));
+}
+accordions.forEach(d=> d.addEventListener('toggle', saveSectionState));
+
+// ---------- Appearance: accent color ----------
+const ACCENTS = [
+  { key:'cyan',   value:'#5FD3E0', label:'Default cyan' },
+  { key:'green',  value:'#6FE0A0', label:'Green' },
+  { key:'gold',   value:'#E0B84C', label:'Gold' },
+  { key:'violet', value:'#B79CE0', label:'Violet' },
+  { key:'red',    value:'#E0573C', label:'Red' }
+];
+function applyAccent(hex){
+  document.documentElement.style.setProperty('--cyan', hex);
+}
+function renderAccentSwatches(activeKey){
+  const wrap = document.getElementById('accentSwatches');
+  wrap.innerHTML = '';
+  ACCENTS.forEach(a=>{
+    const el = document.createElement('div');
+    el.className = 'swatch' + (a.key === activeKey ? ' active' : '');
+    el.style.background = a.value;
+    el.title = a.label;
+    el.addEventListener('click', async ()=>{
+      applyAccent(a.value);
+      await storageSet('accent', a.key);
+      renderAccentSwatches(a.key);
+    });
+    wrap.appendChild(el);
+  });
+}
+document.getElementById('resetAppearance').addEventListener('click', async ()=>{
+  applyAccent(ACCENTS[0].value);
+  await storageSet('accent', ACCENTS[0].key);
+  renderAccentSwatches(ACCENTS[0].key);
+});
+async function initAppearance(){
+  try{
+    const nv = await storageGet('nightVision');
+    if(nv === '1') document.body.classList.add('nv');
+  }catch(e){}
+  let accentKey = 'cyan';
+  try{
+    const raw = await storageGet('accent');
+    if(raw){
+      accentKey = raw;
+      const found = ACCENTS.find(a=>a.key===raw);
+      if(found) applyAccent(found.value);
+    }
+  }catch(e){}
+  renderAccentSwatches(accentKey);
+  await restoreSectionState();
+}
+
+// ---------- Compare nights ----------
+async function loadComparisons(){
+  try{
+    const raw = await storageGet('compare-nights');
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+async function saveComparisons(list){
+  await storageSet('compare-nights', JSON.stringify(list));
+}
+async function renderComparisons(){
+  const list = await loadComparisons();
+  const el = document.getElementById('comparisonList');
+  if(!list.length){
+    el.innerHTML = '<div class="empty">No candidate nights saved yet.</div>';
+    return;
+  }
+  el.innerHTML = list.map((c, i)=>`
+    <div class="compare-row">
+      <div class="compare-head"><b>${c.dateLabel}</b><button class="iconbtn" data-del-compare="${i}">Delete</button></div>
+      <div style="color:var(--dim)">${c.locationLabel || 'Custom location'}</div>
+      <div style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);color:var(--cyan)">
+        <span>MW core ${c.gcAlt}°</span><span>Moon ${c.moonPct}%</span><span>Light poll. ${c.lpPct}%</span>
+      </div>
+    </div>
+  `).join('');
+  el.querySelectorAll('[data-del-compare]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const list = await loadComparisons();
+      list.splice(parseInt(btn.dataset.delCompare), 1);
+      await saveComparisons(list);
+      renderComparisons();
+    });
+  });
+}
+document.getElementById('addComparison').addEventListener('click', async ()=>{
+  const date = currentViewingDate();
+  const gc = altAz(GALACTIC_CENTER.ra, GALACTIC_CENTER.dec, currentLat, currentLon, date);
+  const { illum } = moonPhase(date);
+  const { pct: lpPct } = estimateLightPollution(currentLat, currentLon);
+  const list = await loadComparisons();
+  list.push({
+    dateLabel: els.skyDate.value + ' ' + (document.getElementById('skyTime').value || ''),
+    locationLabel: document.getElementById('locStatus').textContent || `${currentLat.toFixed(2)}, ${currentLon.toFixed(2)}`,
+    gcAlt: gc.altitude.toFixed(0),
+    moonPct: Math.round(illum*100),
+    lpPct
+  });
+  await saveComparisons(list);
+  renderComparisons();
+});
+
+// ---------- Update toast ----------
+const APP_VERSION = '2.0';
+async function checkForUpdateToast(){
+  try{
+    const seen = await storageGet('app-version');
+    if(seen !== null && seen !== APP_VERSION){
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<span>Updated — national parks, star trails, twilight times, and more added.</span><button aria-label="Dismiss">✕</button>`;
+      toast.querySelector('button').addEventListener('click', ()=> toast.remove());
+      document.body.appendChild(toast);
+    }
+    await storageSet('app-version', APP_VERSION);
+  }catch(e){ /* not critical */ }
+}
+
 async function renderPresets(){
   const list = await loadPresets();
   renderStorageStatus();
@@ -1254,6 +1647,7 @@ async function renderPresets(){
       </div>
       <div class="preset-actions">
         <button class="iconbtn" data-load="${i}">Load</button>
+        <button class="iconbtn" data-dup="${i}">Duplicate</button>
         <button class="iconbtn" data-del="${i}">Delete</button>
       </div>
     </div>
@@ -1272,6 +1666,17 @@ async function renderPresets(){
       els.cameraProfile.value = p.cameraProfile || '';
       recalc();
       window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+  els.presetList.querySelectorAll('[data-dup]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const list = await loadPresets();
+      const p = list[parseInt(btn.dataset.dup)];
+      if(!p) return;
+      const copy = { ...p, name: p.name + ' (copy)' };
+      list.push(copy);
+      await savePresets(list);
+      renderPresets();
     });
   });
   els.presetList.querySelectorAll('[data-del]').forEach(btn=>{
@@ -1308,6 +1713,10 @@ renderMoon();
 renderPresets();
 initLocation();
 renderTrailPreview();
+renderIntervalometer();
+initAppearance();
+renderComparisons();
+checkForUpdateToast();
 
 // ---------- Platform-aware install banner ----------
 (function installBanner(){
