@@ -365,3 +365,51 @@ function estimateLightPollution(lat, lon){
   else bucket = 'urban';
   return { pct, bucket, nearest };
 }
+
+// ---------- Closest dark site ----------
+// Standard great-circle destination point formula (bearing + distance from
+// a start point). Used to march outward when searching for darker skies.
+function destinationPoint(lat, lon, bearingDeg, distKm){
+  const R = 6371;
+  const delta = distKm / R;
+  const theta = bearingDeg * Math.PI / 180;
+  const phi1 = lat * Math.PI / 180, lambda1 = lon * Math.PI / 180;
+  const phi2 = Math.asin(Math.sin(phi1)*Math.cos(delta) + Math.cos(phi1)*Math.sin(delta)*Math.cos(theta));
+  const lambda2 = lambda1 + Math.atan2(
+    Math.sin(theta)*Math.sin(delta)*Math.cos(phi1),
+    Math.cos(delta) - Math.sin(phi1)*Math.sin(phi2)
+  );
+  return { lat: phi2*180/Math.PI, lon: ((lambda2*180/Math.PI + 540) % 360) - 180 };
+}
+
+// Nearest national parks to a point, with their own estimated light
+// pollution, sorted by distance (closest first).
+function findNearestParks(lat, lon, limit){
+  return NATIONAL_PARKS.map(([name, state, plat, plon])=>{
+    const dist = haversineKm(lat, lon, plat, plon);
+    const { pct } = estimateLightPollution(plat, plon);
+    return { name, state, dist, pct };
+  }).sort((a,b)=> a.dist - b.dist).slice(0, limit);
+}
+
+// Marches outward along a ring of compass bearings until the light
+// pollution heuristic first drops below thresholdPct, and returns the
+// closest such point found across all bearings. Not exhaustive — a closer
+// dark pocket between sampled bearings/steps can be missed.
+function findNearestDarkDirection(lat, lon, thresholdPct, maxKm, stepKm){
+  let best = null;
+  for(let bearing = 0; bearing < 360; bearing += 15){
+    for(let d = stepKm; d <= maxKm; d += stepKm){
+      const dest = destinationPoint(lat, lon, bearing, d);
+      const { pct } = estimateLightPollution(dest.lat, dest.lon);
+      if(pct < thresholdPct){
+        if(!best || d < best.distance){
+          best = { distance: d, bearing, lat: dest.lat, lon: dest.lon, pct };
+        }
+        break;
+      }
+    }
+  }
+  return best;
+}
+

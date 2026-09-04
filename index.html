@@ -89,6 +89,12 @@
   .nv-toggle .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);}
   body.nv .nv-toggle .dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
   body.nv .nv-toggle{color:var(--text);}
+  body.simple-mode #simpleToggle .dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+  body.simple-mode #simpleToggle{color:var(--text);}
+  .simple-only{display:none;}
+  body.simple-mode .simple-only{display:block;margin-top:6px;}
+  .simple-only.inline{display:none;}
+  body.simple-mode .simple-only.inline{display:inline;}
 
   .hero{
     background:linear-gradient(180deg, var(--panel-2), var(--panel));
@@ -217,6 +223,14 @@
   .compare-row:first-child{border-top:none;}
   .compare-row .compare-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
   .compare-row .compare-head b{font-size:13px;}
+  .category-divider{
+    display:flex;align-items:center;gap:10px;margin:26px 0 12px;padding:0 4px;
+  }
+  .category-divider .line{flex:1;height:1px;background:var(--border);}
+  .category-divider span{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--dim);white-space:nowrap;
+  }
 </style>
 </head>
 <body>
@@ -227,7 +241,10 @@
       <span class="kicker">Prototype · iOS + Android</span>
       <h1>DarkSky Guide</h1>
     </div>
-    <div class="nv-toggle" id="nvToggle"><span class="dot"></span> Night Vision</div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <div class="nv-toggle" id="simpleToggle"><span class="dot"></span> Simple Mode</div>
+      <div class="nv-toggle" id="nvToggle"><span class="dot"></span> Night Vision</div>
+    </div>
   </header>
 
   <div class="install-banner" id="installBanner" style="display:none">
@@ -241,11 +258,13 @@
     <div class="big" id="heroValue">–</div>
     <div class="sub" id="heroSub">set your gear below</div>
     <div class="method-row" id="methodRow"></div>
+    <div class="simple-only hint" style="text-align:center">This is the longest you can hold the shutter open before stars stop looking like dots and start looking like little streaks, because the Earth is spinning under them the whole time.</div>
   </div>
 
   <!-- GEAR INPUTS -->
   <div class="card">
     <h2>Gear</h2>
+    <div class="simple-only hint">Tell it about your camera and lens, and it does the math for you.</div>
     <div class="row">
       <div class="field">
         <label>Camera profile</label>
@@ -333,6 +352,7 @@
       <div class="field">
         <label>Aperture (f-number)</label>
         <input type="number" id="aperture" step="0.1" value="2.8">
+        <div class="simple-only hint">A smaller number here means the lens opens wider and lets in more light — good for night sky photos.</div>
       </div>
       <div class="field">
         <label>Pixel pitch (µm) — auto</label>
@@ -345,10 +365,16 @@
         <input type="text" id="presetName" placeholder="Name this setup, e.g. 'Sony A7III + Sigma 24mm'">
       </div>
     </div>
+    <div class="row">
+      <div class="field">
+        <input type="text" id="presetNotes" placeholder="Lens quirks, optional — e.g. 'needs f/4 to control corner coma'">
+      </div>
+    </div>
     <button class="btn" id="savePreset">Save gear preset</button>
   </div>
 
   <!-- FRAMING & PANORAMA -->
+  <div class="category-divider"><div class="line"></div><span>Exposure Planning</span><div class="line"></div></div>
   <details class="card" data-key="framing">
     <summary><h2>Framing &amp; panorama</h2></summary>
     <div class="details-body">
@@ -377,10 +403,25 @@
     </div>
   </details>
 
+  <!-- HYPERFOCAL / FOREGROUND FOCUS -->
+  <details class="card" data-key="hyperfocal">
+    <summary><h2>Foreground focus (hyperfocal)</h2></summary>
+    <div class="details-body">
+    <div class="hint">If you want a sharp foreground <i>and</i> sharp stars in one frame (rather than focus-stacking two exposures), focus at the hyperfocal distance — everything from half that distance to infinity lands acceptably sharp.</div>
+    <table class="rule-table" style="margin-top:10px">
+      <tr><td>Circle of confusion (est.)</td><td id="hfCoC" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Hyperfocal distance</td><td id="hfDistance" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Focus here for sharp from</td><td id="hfNear" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="hint" id="hfNote" style="margin-top:8px"></div>
+    </div>
+  </details>
+
   <!-- CAMERA SETTINGS GUIDE -->
   <details class="card" open data-key="settings">
     <summary><h2>Camera settings guide</h2></summary>
     <div class="details-body">
+    <div class="simple-only hint">ISO is how sensitive your camera is to light — higher ISO means a brighter photo, but a grainier one. This card figures out a good ISO for you.</div>
     <div class="row">
       <div class="field">
         <label>What are you shooting?</label>
@@ -404,6 +445,7 @@
           <option value="suburban">Suburban (Bortle 6–7)</option>
           <option value="urban">Urban (Bortle 8–9)</option>
         </select>
+        <div class="simple-only hint">How much city light washes out the night sky where you're shooting — pick the closest match.</div>
       </div>
     </div>
     <table class="rule-table" style="margin-top:4px">
@@ -429,6 +471,7 @@
   </details>
 
   <!-- STAR TRAIL PREVIEW -->
+  <div class="category-divider"><div class="line"></div><span>Star Trails &amp; Time-lapse</span><div class="line"></div></div>
   <details class="card" data-key="trails">
     <summary><h2>Star trail preview</h2></summary>
     <div class="details-body">
@@ -444,52 +487,172 @@
     </div>
     <div id="trailSvgWrap"></div>
     <div class="hint" style="margin-top:8px">Same exposure, three points in the sky — trailing depends on <i>where you point</i>, not just how long you expose. Stars near a celestial pole trace tight arcs; stars near the celestial equator (and the Milky Way core, close to it) trail fastest. Shapes are illustrative; the numbers next to each are the real computed values for your current gear.</div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Pick a trail — I'll do the math</div>
+    <div class="hint">Slide toward "short" for pinpoint stars, or toward "long" for a dramatic streaky look. Everything below updates as you drag.</div>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label>Where are you pointing the camera?</label>
+        <select id="trailTargetDec">
+          <option value="75">Near the North Star (barely moves)</option>
+          <option value="40">Middle of the sky</option>
+          <option value="0" selected>Near the horizon (moves fastest)</option>
+          <option value="-29">Toward the Milky Way</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <input type="range" id="trailSlider" min="0" max="100" value="45" style="width:100%">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:2px">
+        <span>Short &amp; sharp</span><span>Long &amp; dramatic</span>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:10px">
+      <div id="trailSliderLabel" style="font-family:var(--mono);font-size:15px;color:var(--cyan);font-weight:600">–</div>
+    </div>
+    <table class="rule-table" style="margin-top:10px">
+      <tr><td>Set your camera to expose for</td><td id="trailSolvedSec" style="text-align:right;color:var(--cyan)">–</td></tr>
+      <tr><td>Then set ISO to</td><td id="trailSolvedIso" style="text-align:right;color:var(--cyan)">–</td></tr>
+    </table>
+    <div class="hint" id="trailSolvedNote" style="margin-top:6px"></div>
     </div>
   </details>
 
   <!-- INTERVALOMETER PLANNER -->
   <details class="card" data-key="intervalometer">
-    <summary><h2>Intervalometer planner</h2></summary>
+    <summary><h2>Stacking &amp; time-lapse</h2></summary>
     <div class="details-body">
+    <div class="hint">Instead of one long photo, take <i>many short photos back to back</i>. Blend them into one long-trail image afterward, or play them in sequence as a video — either way, the plan starts the same.</div>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label>What are you making?</label>
+        <select id="stackMode">
+          <option value="startrail">Star trail (blend into one photo)</option>
+          <option value="timelapse">Time-lapse (play as a video)</option>
+        </select>
+      </div>
+    </div>
     <div class="row">
       <div class="field">
-        <label>Sub-exposure length (s)</label>
+        <label>Length of each photo (s)</label>
         <input type="number" id="ivSubLength" step="1" value="20">
       </div>
       <div class="field">
-        <label>Buffer/write gap (s)</label>
+        <label>Gap between photos (s)</label>
         <input type="number" id="ivGap" step="0.1" value="1">
       </div>
     </div>
-    <div class="row">
-      <div class="field">
-        <label>Plan by</label>
-        <select id="ivMode">
-          <option value="duration">Total shoot duration</option>
-          <option value="frames">Number of frames</option>
-        </select>
+    <div class="hint" style="margin-top:6px">The gap is your camera's time to save each photo before the next one starts — test a short burst on your actual camera and card, since this varies.</div>
+
+    <!-- STAR TRAIL SUB-MODE -->
+    <div id="stackTrailFields">
+      <div class="row" style="margin-top:10px">
+        <div class="field">
+          <label>Plan by</label>
+          <select id="ivMode">
+            <option value="duration">Total time shooting</option>
+            <option value="frames">Number of photos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="ivInputLabel">Total duration (min)</label>
+          <input type="number" id="ivInputValue" step="1" value="120">
+        </div>
       </div>
-      <div class="field">
-        <label id="ivInputLabel">Total duration (min)</label>
-        <input type="number" id="ivInputValue" step="1" value="120">
-      </div>
+      <table class="rule-table">
+        <tr><td>Number of photos</td><td id="ivFrames" style="text-align:right;color:var(--cyan)">–</td></tr>
+        <tr><td>Total time shooting</td><td id="ivElapsed" style="text-align:right;color:var(--cyan)">–</td></tr>
+        <tr><td>Storage needed</td><td id="ivStorage" style="text-align:right;color:var(--cyan)">–</td></tr>
+      </table>
+      <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">What the finished, stacked trail looks like</div>
+      <div class="hint">This uses your <i>total time shooting</i> above, not one photo's length — the whole point of stacking is that the trail grows across the entire session.</div>
+      <div id="ivTrailSvgWrap" style="margin-top:8px"></div>
     </div>
-    <table class="rule-table">
-      <tr><td>Frame count</td><td id="ivFrames" style="text-align:right;color:var(--cyan)">–</td></tr>
-      <tr><td>Actual elapsed time</td><td id="ivElapsed" style="text-align:right;color:var(--cyan)">–</td></tr>
-      <tr><td>Estimated storage</td><td id="ivStorage" style="text-align:right;color:var(--cyan)">–</td></tr>
+
+    <!-- TIME-LAPSE SUB-MODE -->
+    <div id="stackTimelapseFields" style="display:none">
+      <div class="row" style="margin-top:10px">
+        <div class="field">
+          <label>Final video length (s)</label>
+          <input type="number" id="tlVideoLength" step="1" value="15">
+        </div>
+        <div class="field">
+          <label>Frame rate</label>
+          <select id="tlFps">
+            <option value="24">24 fps</option>
+            <option value="25">25 fps</option>
+            <option value="30" selected>30 fps</option>
+            <option value="60">60 fps</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Does the light change during the shoot?</label>
+          <select id="tlLightChange">
+            <option value="no">No — all in the dark (e.g. Milky Way moving overhead)</option>
+            <option value="yes">Yes — sunset/blue hour fading into night</option>
+          </select>
+        </div>
+      </div>
+      <table class="rule-table">
+        <tr><td>Photos needed</td><td id="tlFrames" style="text-align:right;color:var(--cyan)">–</td></tr>
+        <tr><td>Time you'll be shooting</td><td id="tlShootTime" style="text-align:right;color:var(--cyan)">–</td></tr>
+        <tr><td>Storage needed</td><td id="tlStorage" style="text-align:right;color:var(--cyan)">–</td></tr>
+      </table>
+      <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Do individual frames stay sharp?</div>
+      <div class="hint">Using just one photo's length (not the whole shoot) — each frame of the video should show pinpoint stars, not trails, unless you want a stylized streaky look.</div>
+      <div id="tlTrailSvgWrap" style="margin-top:8px"></div>
+    </div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Camera mode</div>
+    <div id="modeAdvisorBox" class="badge good" style="margin-top:0;display:block;padding:10px 12px;font-family:var(--sans)"></div>
+
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Settings for each photo</div>
+    <div class="hint">Every individual photo is short, so it needs a brighter setting than one long exposure would.</div>
+    <table class="rule-table" style="margin-top:8px">
+      <tr><td>ISO for each photo</td><td id="ivIso" style="text-align:right;color:var(--cyan)">–</td></tr>
     </table>
-    <div class="row" style="margin-top:10px">
+    <div class="hint" id="isoCeilingNote" style="margin-top:6px"></div>
+
+    <div class="row" style="margin-top:14px">
       <div class="field">
         <label>RAW file size (MB, approx)</label>
         <input type="number" id="ivFileSize" step="1" value="30">
       </div>
     </div>
-    <div class="hint" style="margin-top:6px">Buffer/write gap is your camera's time to write each RAW to card before the next shot can start — check your actual interval against a short test burst, since it varies by camera and card speed.</div>
+    </div>
+  </details>
+
+  <!-- BULB TIMER -->
+  <details class="card" data-key="bulbtimer">
+    <summary><h2>Bulb timer</h2></summary>
+    <div class="details-body">
+    <div class="hint">A real countdown for cameras without a built-in bulb timer, or for testing a long single exposure — works fully offline, with a start/end beep. Keep this tab open and your screen awake while it runs.</div>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label>Duration (seconds)</label>
+        <input type="number" id="btDuration" step="1" value="90">
+      </div>
+      <div class="field">
+        <label></label>
+        <button class="btn ghost" id="btUseTrail" style="margin-top:6px">Use trail preview time</button>
+      </div>
+    </div>
+    <div style="text-align:center;margin:16px 0">
+      <div id="btDisplay" style="font-family:var(--mono);font-size:44px;font-weight:600;color:var(--cyan);letter-spacing:-0.02em;">01:30</div>
+      <div class="hint" id="btStatus" style="margin-top:2px">Ready</div>
+    </div>
+    <div class="row">
+      <button class="btn" id="btStart" style="flex:1">Start</button>
+      <button class="btn ghost" id="btStop" style="flex:1">Stop</button>
+      <button class="btn ghost" id="btReset" style="flex:1">Reset</button>
+    </div>
     </div>
   </details>
 
   <!-- SAVED PRESETS -->
+  <div class="category-divider"><div class="line"></div><span>Presets, Log &amp; Reference</span><div class="line"></div></div>
   <details class="card" data-key="presets">
     <summary><h2>Saved presets <span id="presetCount" style="color:var(--dim);font-weight:400"></span></h2></summary>
     <div class="details-body">
@@ -501,6 +664,62 @@
       <input type="file" id="importPresetsFile" accept="application/json" style="display:none">
     </div>
     <div class="hint" style="margin-top:6px">iOS can clear site storage after ~7 days unopened — export a backup occasionally if you rely on saved presets.</div>
+    </div>
+  </details>
+
+  <!-- RESULTS JOURNAL -->
+  <details class="card" data-key="journal">
+    <summary><h2>Results journal</h2></summary>
+    <div class="details-body">
+    <div class="hint">Log what you actually shot and how it turned out. Every formula on this page is a starting point — a season of real outcomes against real settings becomes a better guide than any rule, since acceptable noise and trailing are ultimately your call, not a formula's.</div>
+    <button class="btn ghost" id="journalFill" style="margin-top:10px">Fill from current settings</button>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label>Focal length (mm)</label>
+        <input type="number" id="jFocal" step="1">
+      </div>
+      <div class="field">
+        <label>Aperture (f/)</label>
+        <input type="number" id="jAperture" step="0.1">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>ISO</label>
+        <input type="number" id="jIso" step="100">
+      </div>
+      <div class="field">
+        <label>Exposure (seconds)</label>
+        <input type="number" id="jExposure" step="1">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Target / subject</label>
+        <input type="text" id="jTarget" placeholder="e.g. Milky Way core, near Polaris">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Result</label>
+        <select id="jResult">
+          <option>Good exposure, crisp stars</option>
+          <option>Slight star softening</option>
+          <option>Visible star trailing</option>
+          <option>Too dark / underexposed</option>
+          <option>Too bright / overexposed</option>
+          <option>Excess noise</option>
+          <option>Other — see notes</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <input type="text" id="jNotes" placeholder="Notes, optional">
+      </div>
+    </div>
+    <button class="btn" id="journalAdd" style="margin-top:6px">Add entry</button>
+    <div id="journalList" style="margin-top:12px"><div class="empty">No entries logged yet.</div></div>
     </div>
   </details>
 
@@ -519,6 +738,7 @@
   </details>
 
   <!-- LOCATION -->
+  <div class="category-divider"><div class="line"></div><span>Location &amp; Sky Conditions</span><div class="line"></div></div>
   <details class="card" data-key="location">
     <summary><h2>Location</h2></summary>
     <div class="details-body">
@@ -546,6 +766,7 @@
     <div class="hint" id="locStatus" style="margin-top:6px"></div>
 
     <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Estimated light pollution</div>
+    <div class="simple-only hint">City lights brighten the sky like a giant nightlight, hiding faint stars. A lower percent here means a darker, better sky for photos.</div>
     <div class="moon-row">
       <div class="moon-disc" id="lpDisc" style="background:var(--panel-2)"></div>
       <div class="moon-info">
@@ -555,6 +776,20 @@
     </div>
     <div id="lpBadge"></div>
     <div class="hint" style="margin-top:8px">Estimated from distance to major cities in a bundled list of ~200 — not measured sky-brightness data. Automatically sets the Sky brightness picker in the settings guide above; change it manually there any time if you know your actual skies better than this guess does.</div>
+    </div>
+  </details>
+
+  <!-- CLOSEST DARK SITE -->
+  <details class="card" data-key="darksite">
+    <summary><h2>Closest dark site</h2></summary>
+    <div class="details-body">
+    <div class="hint">Same heuristic as above, run outward from your chosen location — a nearby national park, and the nearest direction where estimated skies clear into "rural or better."</div>
+    <button class="btn" id="findDarkSite" style="margin-top:10px">Search from current location</button>
+    <div class="hint" style="margin:14px 0 6px;color:var(--text);font-weight:600;">Nearest national parks</div>
+    <div id="darkSiteParks"><div class="empty">Tap search above.</div></div>
+    <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Nearest clear direction</div>
+    <div id="darkSiteDirection" class="hint"></div>
+    <div class="hint" style="margin-top:8px">Direction search checks a ring of compass bearings out to 300 km in 10 km steps — it can miss a closer dark pocket between sample points, and it only reasons about distance from the ~275 cities and parks in this app's bundled list, not terrain, weather, or roads.</div>
     </div>
   </details>
 
@@ -602,8 +837,10 @@
       </div>
     </div>
     <div id="moonBadge"></div>
+    <div class="simple-only hint">A bright moon works like a giant light in the sky — it washes out faint stars and the Milky Way, the same way streetlights wash out the stars in a city. A darker (less full) moon means a better view.</div>
 
     <div class="hint" style="margin:16px 0 6px;color:var(--text);font-weight:600;">Milky Way core</div>
+    <div class="simple-only hint">The "core" is the brightest, most photogenic part of the Milky Way. This tells you how high it is in the sky right now — higher is better, since low means it's blocked by trees, buildings, or haze near the horizon.</div>
     <table class="rule-table">
       <tr><td>Altitude at chosen time</td><td id="gcAltitude" style="text-align:right;color:var(--cyan)">–</td></tr>
       <tr><td>Verdict</td><td id="gcVerdict" style="text-align:right;color:var(--cyan)">–</td></tr>
@@ -639,6 +876,20 @@
     <button class="btn ghost" id="addComparison" style="margin-top:10px">Add current date + location</button>
     <div id="comparisonList" style="margin-top:10px"><div class="empty">No candidate nights saved yet.</div></div>
   </div>
+  </details>
+
+  <!-- NIGHT PLAN -->
+  <details class="card" data-key="nightplan">
+    <summary><h2>Night plan</h2></summary>
+    <div class="details-body">
+    <div class="hint">Compiles everything above — location, twilight, moon, Milky Way, gear, and settings — into one summary you can copy or print, for yourself or to send to a shooting partner who doesn't have this app.</div>
+    <button class="btn" id="buildNightPlan" style="margin-top:10px">Build plan</button>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="copyNightPlan" style="flex:1">Copy text</button>
+      <button class="btn ghost" id="printNightPlan" style="flex:1">Print</button>
+    </div>
+    <pre id="nightPlanOutput" style="white-space:pre-wrap;font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--border);border-radius:9px;padding:12px;margin-top:10px;color:var(--text);display:none;"></pre>
+    </div>
   </details>
 
   <!-- TIPS -->
@@ -688,46 +939,51 @@ const SENSORS = {
 
 // Camera profiles: pre-fill sensor + resolution for known bodies.
 // sensorKey must match a key in SENSORS above.
+// isoCeiling: a general recommended ISO ceiling for astro use, based on
+// sensor size/generation/pixel density — a guideline, not a lab measurement.
+// Larger pixels (lower MP for a given sensor size) and newer sensor
+// generations generally tolerate higher ISO before noise gets excessive.
 const CAMERA_PROFILES = {
   // Sony APS-C
-  sony_a6000: { label:'Sony α6000', sensorKey:'apsc_nikon', width:23.5, mp:24.3 },
-  sony_a6100: { label:'Sony α6100', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
-  sony_a6300: { label:'Sony α6300', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
-  sony_a6400: { label:'Sony α6400', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
-  sony_a6500: { label:'Sony α6500', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
-  sony_a6600: { label:'Sony α6600', sensorKey:'apsc_nikon', width:23.5, mp:24.2 },
-  sony_a6700: { label:'Sony α6700', sensorKey:'apsc_nikon', width:23.5, mp:26.0 },
+  sony_a6000: { label:'Sony α6000', sensorKey:'apsc_nikon', width:23.5, mp:24.3, isoCeiling:3200 },
+  sony_a6100: { label:'Sony α6100', sensorKey:'apsc_nikon', width:23.5, mp:24.2, isoCeiling:3200 },
+  sony_a6300: { label:'Sony α6300', sensorKey:'apsc_nikon', width:23.5, mp:24.2, isoCeiling:3200 },
+  sony_a6400: { label:'Sony α6400', sensorKey:'apsc_nikon', width:23.5, mp:24.2, isoCeiling:3200 },
+  sony_a6500: { label:'Sony α6500', sensorKey:'apsc_nikon', width:23.5, mp:24.2, isoCeiling:3200 },
+  sony_a6600: { label:'Sony α6600', sensorKey:'apsc_nikon', width:23.5, mp:24.2, isoCeiling:3200 },
+  sony_a6700: { label:'Sony α6700', sensorKey:'apsc_nikon', width:23.5, mp:26.0, isoCeiling:6400 },
   // Sony Full Frame
-  sony_a7iii:  { label:'Sony α7 III',  sensorKey:'ff', width:36.0, mp:24.2 },
-  sony_a7iv:   { label:'Sony α7 IV',   sensorKey:'ff', width:36.0, mp:33.0 },
-  sony_a7c:    { label:'Sony α7C',     sensorKey:'ff', width:36.0, mp:24.2 },
-  sony_a7riv:  { label:'Sony α7R V',   sensorKey:'ff', width:36.0, mp:61.0 },
-  sony_a7siii: { label:'Sony α7S III', sensorKey:'ff', width:36.0, mp:12.1 },
+  sony_a7iii:  { label:'Sony α7 III',  sensorKey:'ff', width:36.0, mp:24.2, isoCeiling:12800 },
+  sony_a7iv:   { label:'Sony α7 IV',   sensorKey:'ff', width:36.0, mp:33.0, isoCeiling:12800 },
+  sony_a7c:    { label:'Sony α7C',     sensorKey:'ff', width:36.0, mp:24.2, isoCeiling:12800 },
+  sony_a7riv:  { label:'Sony α7R V',   sensorKey:'ff', width:36.0, mp:61.0, isoCeiling:6400 },
+  sony_a7siii: { label:'Sony α7S III', sensorKey:'ff', width:36.0, mp:12.1, isoCeiling:25600 },
   // Canon Full Frame
-  canon_r8:    { label:'Canon EOS R8',          sensorKey:'ff', width:36.0, mp:24.2 },
-  canon_r6ii:  { label:'Canon EOS R6 Mark II',  sensorKey:'ff', width:36.0, mp:24.2 },
-  canon_rp:    { label:'Canon EOS RP',          sensorKey:'ff', width:36.0, mp:26.2 },
+  canon_r8:    { label:'Canon EOS R8',          sensorKey:'ff', width:36.0, mp:24.2, isoCeiling:12800 },
+  canon_r6ii:  { label:'Canon EOS R6 Mark II',  sensorKey:'ff', width:36.0, mp:24.2, isoCeiling:12800 },
+  canon_rp:    { label:'Canon EOS RP',          sensorKey:'ff', width:36.0, mp:26.2, isoCeiling:6400 },
   // Canon APS-C
-  canon_r7:    { label:'Canon EOS R7',           sensorKey:'apsc_canon', width:22.3, mp:32.5 },
-  canon_r10:   { label:'Canon EOS R10',          sensorKey:'apsc_canon', width:22.3, mp:24.2 },
-  canon_90d:   { label:'Canon EOS 90D',          sensorKey:'apsc_canon', width:22.3, mp:32.5 },
-  canon_t7i:   { label:'Canon Rebel T7i / 800D', sensorKey:'apsc_canon', width:22.3, mp:24.2 },
+  canon_r7:    { label:'Canon EOS R7',           sensorKey:'apsc_canon', width:22.3, mp:32.5, isoCeiling:3200 },
+  canon_r10:   { label:'Canon EOS R10',          sensorKey:'apsc_canon', width:22.3, mp:24.2, isoCeiling:3200 },
+  canon_90d:   { label:'Canon EOS 90D',          sensorKey:'apsc_canon', width:22.3, mp:32.5, isoCeiling:3200 },
+  canon_t7i:   { label:'Canon Rebel T7i / 800D', sensorKey:'apsc_canon', width:22.3, mp:24.2, isoCeiling:3200 },
   // Nikon Full Frame
-  nikon_z5:    { label:'Nikon Z5',    sensorKey:'ff', width:36.0, mp:24.0 },
-  nikon_z6ii:  { label:'Nikon Z6 II', sensorKey:'ff', width:36.0, mp:24.5 },
-  nikon_z7ii:  { label:'Nikon Z7 II', sensorKey:'ff', width:36.0, mp:45.7 },
-  nikon_d780:  { label:'Nikon D780',  sensorKey:'ff', width:36.0, mp:24.5 },
+  nikon_z5:    { label:'Nikon Z5',    sensorKey:'ff', width:36.0, mp:24.0, isoCeiling:12800 },
+  nikon_z6ii:  { label:'Nikon Z6 II', sensorKey:'ff', width:36.0, mp:24.5, isoCeiling:12800 },
+  nikon_z7ii:  { label:'Nikon Z7 II', sensorKey:'ff', width:36.0, mp:45.7, isoCeiling:6400 },
+  nikon_d780:  { label:'Nikon D780',  sensorKey:'ff', width:36.0, mp:24.5, isoCeiling:12800 },
   // Nikon APS-C / DX
-  nikon_z50:   { label:'Nikon Z50', sensorKey:'apsc_nikon', width:23.5, mp:20.9 },
-  nikon_zfc:   { label:'Nikon Zfc', sensorKey:'apsc_nikon', width:23.5, mp:20.9 },
+  nikon_z50:   { label:'Nikon Z50', sensorKey:'apsc_nikon', width:23.5, mp:20.9, isoCeiling:6400 },
+  nikon_zfc:   { label:'Nikon Zfc', sensorKey:'apsc_nikon', width:23.5, mp:20.9, isoCeiling:6400 },
   // Fujifilm APS-C
-  fuji_xt4:    { label:'Fujifilm X-T4',  sensorKey:'apsc_nikon', width:23.5, mp:26.1 },
-  fuji_xt5:    { label:'Fujifilm X-T5',  sensorKey:'apsc_nikon', width:23.5, mp:40.2 },
-  fuji_xs10:   { label:'Fujifilm X-S10', sensorKey:'apsc_nikon', width:23.5, mp:26.1 },
+  fuji_xt4:    { label:'Fujifilm X-T4',  sensorKey:'apsc_nikon', width:23.5, mp:26.1, isoCeiling:3200 },
+  fuji_xt5:    { label:'Fujifilm X-T5',  sensorKey:'apsc_nikon', width:23.5, mp:40.2, isoCeiling:3200 },
+  fuji_xs10:   { label:'Fujifilm X-S10', sensorKey:'apsc_nikon', width:23.5, mp:26.1, isoCeiling:3200 },
   // Micro Four Thirds
-  om_om1:        { label:'OM System OM-1',      sensorKey:'mft', width:17.4, mp:20.4 },
-  panasonic_gh6: { label:'Panasonic Lumix GH6',  sensorKey:'mft', width:17.3, mp:25.2 }
+  om_om1:        { label:'OM System OM-1',      sensorKey:'mft', width:17.4, mp:20.4, isoCeiling:6400 },
+  panasonic_gh6: { label:'Panasonic Lumix GH6',  sensorKey:'mft', width:17.3, mp:25.2, isoCeiling:3200 }
 };
+const DEFAULT_ISO_CEILING = 6400; // used when no camera profile is selected
 
 const els = {
   sensorSelect: document.getElementById('sensorSelect'),
@@ -772,6 +1028,43 @@ function computePixelPitch(sensor, mp){
 function npfSeconds(N, p, f){ return (35*N + 30*p) / f; }
 function ruleSeconds(constant, f, crop){ return constant / (f*crop); }
 
+// Circle of confusion via the standard sensor-diagonal/1500 convention (the
+// same rule used by most print-oriented DOF calculators), then the classic
+// hyperfocal formula H = f²/(N·CoC) + f, all in mm, converted for display.
+function renderHyperfocal(){
+  if(!document.getElementById('hfDistance')) return;
+  const sensor = currentSensor();
+  const f = parseFloat(els.focalLength.value) || 0;
+  const N = parseFloat(els.aperture.value) || 0;
+  const mp = parseFloat(els.megapixels.value) || 0;
+  if(f <= 0 || N <= 0 || mp <= 0){
+    document.getElementById('hfCoC').textContent = '–';
+    document.getElementById('hfDistance').textContent = '–';
+    document.getElementById('hfNear').textContent = '–';
+    document.getElementById('hfNote').textContent = 'Fill in gear above first.';
+    return;
+  }
+  const heightMm = sensor.width / sensor.aspect;
+  const diagMm = Math.sqrt(sensor.width*sensor.width + heightMm*heightMm);
+  const cocMm = diagMm / 1500;
+  const hMm = (f*f) / (N * cocMm) + f;
+  const hM = hMm / 1000;
+  const nearM = hM / 2;
+
+  const fmtDist = (m)=> m >= 1000 ? (m/1000).toFixed(1) + ' km' : m.toFixed(1) + ' m';
+  document.getElementById('hfCoC').textContent = (cocMm*1000).toFixed(1) + ' µm';
+  document.getElementById('hfDistance').textContent = fmtDist(hM);
+  document.getElementById('hfNear').textContent = fmtDist(nearM) + ' to infinity';
+
+  let note;
+  if(hM > 30){
+    note = `At f/${N}, hyperfocal is quite far out — getting a close foreground sharp this way often isn't practical. Focus-stacking a separate foreground exposure is usually the better call at wide apertures like this.`;
+  } else {
+    note = `Manually focus at ${fmtDist(hM)} (not on the foreground itself, and not at infinity) to keep both a ${fmtDist(nearM)}+ foreground and the stars acceptably sharp in one frame.`;
+  }
+  document.getElementById('hfNote').textContent = note;
+}
+
 function fmt(sec){
   if(!isFinite(sec) || sec <= 0) return '–';
   if(sec < 10) return sec.toFixed(1) + 's';
@@ -812,7 +1105,10 @@ function recalc(){
 
   if(document.getElementById('scenarioSelect')) renderScenario();
   if(document.getElementById('trailSvgWrap')) renderTrailPreview();
+  if(document.getElementById('trailSlider')) renderTrailSlider();
   if(document.getElementById('fovH')) renderFOV(sensor, f);
+  renderHyperfocal();
+  if(document.getElementById('stackMode')) renderStackingCard();
 }
 
 // ---------- Field of view + panorama ----------
@@ -874,7 +1170,7 @@ const SCENARIOS = {
     shutter: 'fixed',
     shutterText: '30–60s per sub, shot back-to-back',
     isoOverride: null,
-    notes: 'Ignore the NPF/500 cap entirely — trailing is the point. Shoot a long continuous sequence and stack the frames in post (e.g. StarStaX) rather than one ultra-long exposure. Forgiving of one ruined frame — just drop it from the stack.'
+    notes: 'Ignore the NPF/500 cap entirely — trailing is the point. Shoot a long continuous sequence and stack the frames in post (e.g. StarStaX) rather than one ultra-long exposure. Forgiving of one ruined frame — just drop it from the stack. Use the Star trail stacking planner below to work out photo count, per-photo ISO, and what the finished stacked trail will look like.'
   },
   startrails_single: {
     isoRange: '100–400 typical',
@@ -926,6 +1222,24 @@ function roundToStandardISO(iso){
   return best;
 }
 
+// Solves the standard exposure equation for a target EV (sky brightness +
+// moon illumination), given aperture and shutter time. Shared by the
+// scenario guide and the star-trail-length solver below.
+function currentIsoCeiling(){
+  const key = els.cameraProfile.value;
+  const p = CAMERA_PROFILES[key];
+  return (p && p.isoCeiling) ? p.isoCeiling : DEFAULT_ISO_CEILING;
+}
+
+function computeSuggestedISOFor(apertureN, tSeconds){
+  if(!apertureN || apertureN <= 0 || !isFinite(tSeconds) || tSeconds <= 0) return null;
+  const skyKey = document.getElementById('skyBrightness').value;
+  let ev = SKY_EV_BASE[skyKey];
+  ev += (currentMoonIllum || 0) * 4;
+  const rawIso = 100 * (apertureN * apertureN) / (tSeconds * Math.pow(2, ev));
+  return roundToStandardISO(rawIso);
+}
+
 // Suggests ISO by solving the standard exposure equation for a target EV,
 // given this session's aperture + the scenario's reference shutter time,
 // then nudging that target brighter based on tonight's moon illumination.
@@ -940,15 +1254,7 @@ function suggestISO(scenarioKey, npfSeconds){
   } else {
     t = s.refShutterSec;
   }
-  if(!isFinite(t) || t <= 0) return null;
-
-  const skyKey = document.getElementById('skyBrightness').value;
-  let ev = SKY_EV_BASE[skyKey];
-  // Moonlight brightens the scene — add up to ~4 EV at full illumination.
-  ev += (currentMoonIllum || 0) * 4;
-
-  const rawIso = 100 * (N * N) / (t * Math.pow(2, ev));
-  return roundToStandardISO(rawIso);
+  return computeSuggestedISOFor(N, t);
 }
 
 function renderScenario(){
@@ -990,13 +1296,16 @@ const TRAIL_SAMPLES = [
   { label: 'Celestial equator', dec: 0 }
 ];
 
-function renderTrailPreview(){
-  const t = parseFloat(document.getElementById('trailSeconds').value) || 0;
+// Renders the 3-declination trail visual into any container, for any
+// exposure time in seconds. Shared by the single-exposure preview and the
+// stacking (cumulative session time) preview below.
+function renderTrailSVG(t, wrapId){
   const f = parseFloat(els.focalLength.value) || 0;
   const pitch = parseFloat(els.pixelPitch.value) || 0;
-  const wrap = document.getElementById('trailSvgWrap');
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
   if(t <= 0 || f <= 0 || pitch <= 0){
-    wrap.innerHTML = '<div class="empty">Enter gear + an exposure time above to preview.</div>';
+    wrap.innerHTML = '<div class="empty">Fill in your gear above to preview.</div>';
     return;
   }
   const pxScaleArcsecPerPx = (pitch / f) * 206.265;
@@ -1034,6 +1343,11 @@ function renderTrailPreview(){
   svg += '</svg>';
   wrap.innerHTML = svg;
 }
+
+function renderTrailPreview(){
+  const t = parseFloat(document.getElementById('trailSeconds').value) || 0;
+  renderTrailSVG(t, 'trailSvgWrap');
+}
 document.getElementById('trailSeconds').addEventListener('input', renderTrailPreview);
 document.getElementById('trailUseNPF').addEventListener('click', ()=>{
   const npfVal = parseFloat(els.rNPF.textContent);
@@ -1043,7 +1357,161 @@ document.getElementById('trailUseNPF').addEventListener('click', ()=>{
   }
 });
 
+// ---------- Trail-length slider: pick a look, get exposure + ISO ----------
+// Slider is 0–100 but maps exponentially to a 2px–400px target trail length,
+// so it stays useful across the whole range instead of being too coarse at
+// the "crisp" end or maxing out too early at the "dramatic" end.
+function sliderToPx(v){
+  const minPx = 2, maxPx = 400;
+  return minPx * Math.pow(maxPx/minPx, v/100);
+}
+function renderTrailSlider(){
+  const v = parseFloat(document.getElementById('trailSlider').value);
+  const dec = parseFloat(document.getElementById('trailTargetDec').value);
+  const desiredPx = sliderToPx(v);
+  const f = parseFloat(els.focalLength.value);
+  const pitch = parseFloat(els.pixelPitch.value);
+  const aperture = parseFloat(els.aperture.value);
+  const labelEl = document.getElementById('trailSliderLabel');
+  const secEl = document.getElementById('trailSolvedSec');
+  const isoEl = document.getElementById('trailSolvedIso');
+  const noteEl = document.getElementById('trailSolvedNote');
+
+  let lookLabel;
+  if(v < 20) lookLabel = 'Short & sharp — barely any streak';
+  else if(v < 45) lookLabel = 'Slight streak';
+  else if(v < 70) lookLabel = 'Noticeable streak';
+  else lookLabel = 'Long, dramatic streak';
+  labelEl.textContent = lookLabel;
+
+  if(!f || f <= 0 || !pitch || pitch <= 0){
+    secEl.textContent = '–'; isoEl.textContent = '–';
+    noteEl.textContent = 'Fill in your gear (focal length + sensor) above first.';
+    return;
+  }
+  const pxScaleArcsecPerPx = (pitch / f) * 206.265;
+  const ratePerSec = starTrailArcsec(dec, 1);
+  if(ratePerSec <= 0.0001){
+    secEl.textContent = '–';
+    noteEl.textContent = 'Right at the North Star, stars barely move at all here — try "middle of the sky" or "near the horizon" instead.';
+    return;
+  }
+  const requiredSec = (desiredPx * pxScaleArcsecPerPx) / ratePerSec;
+  secEl.textContent = fmtDuration(requiredSec);
+  const suggested = computeSuggestedISOFor(aperture, requiredSec);
+  isoEl.textContent = suggested ? 'ISO ' + suggested : '– (set aperture above)';
+  noteEl.textContent = 'This updates the picture above too — check the other two boxes to see how the same exposure looks elsewhere in the sky.';
+
+  document.getElementById('trailSeconds').value = requiredSec < 10 ? requiredSec.toFixed(1) : Math.round(requiredSec);
+  renderTrailPreview();
+}
+document.getElementById('trailSlider').addEventListener('input', renderTrailSlider);
+document.getElementById('trailTargetDec').addEventListener('change', renderTrailSlider);
+
+// ---------- Duration formatting (shared by trail slider + intervalometer) ----------
+function fmtDuration(sec){
+  if(!isFinite(sec) || sec <= 0) return '–';
+  if(sec < 60) return sec.toFixed(1) + 's';
+  const totalMin = sec/60;
+  if(totalMin < 60) return totalMin.toFixed(1) + 'm';
+  const h = Math.floor(sec/3600), m = Math.round((sec%3600)/60);
+  return h + 'h ' + m + 'm';
+}
+
 // ---------- Intervalometer planner ----------
+// ---------- Stacking & time-lapse: camera mode advisor ----------
+function renderModeAdvisor(){
+  const mode = document.getElementById('stackMode').value;
+  const lightChange = document.getElementById('tlLightChange').value;
+  const box = document.getElementById('modeAdvisorBox');
+  if(mode === 'startrail'){
+    box.className = 'badge good';
+    box.style.display = 'block';
+    box.innerHTML = '<b>Manual (M)</b> — lock every setting so all your photos match exactly. Any brightness shift between frames shows up as a visible seam once they\'re stacked together.';
+  } else if(lightChange === 'no'){
+    box.className = 'badge good';
+    box.style.display = 'block';
+    box.innerHTML = '<b>Manual (M)</b> — the night sky barely changes brightness over an hour or two, so a locked exposure keeps the video flicker-free frame to frame.';
+  } else {
+    box.className = 'badge ok';
+    box.style.display = 'block';
+    box.innerHTML = '<b>Aperture Priority (Av/A) with Auto ISO</b>, or manual "exposure ramping" — the sky gets roughly 10,000× dimmer from daylight to full dark, far more range than one manual setting can cover. Fix your aperture so depth of field doesn\'t shift mid-shot, and let ISO climb gradually as it darkens, either automatically or by adjusting it yourself every so often.';
+  }
+}
+
+// Shared "settings for each photo" block — used by both star-trail and
+// time-lapse sub-modes, since both take a series of short individual photos.
+function renderStackSettings(){
+  const mode = document.getElementById('stackMode').value;
+  const lightChange = document.getElementById('tlLightChange').value;
+  const sub = parseFloat(document.getElementById('ivSubLength').value) || 0;
+  const aperture = parseFloat(els.aperture.value);
+  const isoEl = document.getElementById('ivIso');
+  const noteEl = document.getElementById('isoCeilingNote');
+
+  if(mode === 'timelapse' && lightChange === 'yes'){
+    isoEl.textContent = 'Changes throughout the shoot';
+    noteEl.textContent = 'With Auto ISO handling the darkening sky, there\'s no single ISO to suggest here — see the camera mode note above instead.';
+    return;
+  }
+
+  const subIso = computeSuggestedISOFor(aperture, sub);
+  if(!subIso){
+    isoEl.textContent = '– (set aperture in Gear above)';
+    noteEl.textContent = '';
+    return;
+  }
+  isoEl.textContent = 'ISO ' + subIso;
+  const ceiling = currentIsoCeiling();
+  if(subIso > ceiling){
+    noteEl.innerHTML = `<span class="badge bad" style="margin-top:0">Above the usual comfort zone (~ISO ${ceiling}) for this camera</span> — try a wider aperture or a shorter total session instead of pushing ISO higher, or expect noticeable grain.`;
+  } else {
+    noteEl.textContent = `Comfortably under this camera's usual ISO ceiling for astro use (~${ceiling}).`;
+  }
+}
+
+function renderTimelapse(){
+  const sub = parseFloat(document.getElementById('ivSubLength').value) || 0;
+  const gap = parseFloat(document.getElementById('ivGap').value) || 0;
+  const videoLen = parseFloat(document.getElementById('tlVideoLength').value) || 0;
+  const fps = parseFloat(document.getElementById('tlFps').value) || 30;
+  const fileSize = parseFloat(document.getElementById('ivFileSize').value) || 0;
+  const cycle = sub + gap;
+  if(cycle <= 0 || videoLen <= 0){
+    document.getElementById('tlFrames').textContent = '–';
+    document.getElementById('tlShootTime').textContent = '–';
+    document.getElementById('tlStorage').textContent = '–';
+    return;
+  }
+  const frames = Math.round(videoLen * fps);
+  const shootSec = frames * cycle;
+  document.getElementById('tlFrames').textContent = frames + ' photos';
+  const h = Math.floor(shootSec/3600), m = Math.round((shootSec%3600)/60);
+  document.getElementById('tlShootTime').textContent = (h>0 ? h+'h ' : '') + m + 'm';
+  const storageMB = frames * fileSize;
+  document.getElementById('tlStorage').textContent = storageMB > 1024
+    ? (storageMB/1024).toFixed(1) + ' GB' : storageMB.toFixed(0) + ' MB';
+
+  renderTrailSVG(sub, 'tlTrailSvgWrap');
+}
+
+// Master render: picks the right sub-mode calculation, then the shared bits.
+function renderStackingCard(){
+  const mode = document.getElementById('stackMode').value;
+  document.getElementById('stackTrailFields').style.display = mode === 'startrail' ? 'block' : 'none';
+  document.getElementById('stackTimelapseFields').style.display = mode === 'timelapse' ? 'block' : 'none';
+  renderModeAdvisor();
+  if(mode === 'startrail') renderIntervalometer();
+  else renderTimelapse();
+  renderStackSettings();
+}
+document.getElementById('stackMode').addEventListener('change', renderStackingCard);
+document.getElementById('tlLightChange').addEventListener('change', renderStackingCard);
+['tlVideoLength','tlFps'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderStackingCard);
+  document.getElementById(id).addEventListener('change', renderStackingCard);
+});
+
 function renderIntervalometer(){
   const sub = parseFloat(document.getElementById('ivSubLength').value) || 0;
   const gap = parseFloat(document.getElementById('ivGap').value) || 0;
@@ -1065,12 +1533,14 @@ function renderIntervalometer(){
     frames = Math.max(0, Math.round(inputVal));
     totalSec = frames * cycle;
   }
-  document.getElementById('ivFrames').textContent = frames + ' frames';
+  document.getElementById('ivFrames').textContent = frames + ' photos';
   const h = Math.floor(totalSec/3600), m = Math.round((totalSec%3600)/60);
   document.getElementById('ivElapsed').textContent = (h>0 ? h+'h ' : '') + m + 'm';
   const storageMB = frames * fileSize;
   document.getElementById('ivStorage').textContent = storageMB > 1024
     ? (storageMB/1024).toFixed(1) + ' GB' : storageMB.toFixed(0) + ' MB';
+
+  renderTrailSVG(totalSec, 'ivTrailSvgWrap');
 }
 document.getElementById('ivMode').addEventListener('change', ()=>{
   const label = document.getElementById('ivInputLabel');
@@ -1082,10 +1552,106 @@ document.getElementById('ivMode').addEventListener('change', ()=>{
     label.textContent = 'Number of frames';
     input.value = 300;
   }
-  renderIntervalometer();
+  renderStackingCard();
 });
 ['ivSubLength','ivGap','ivInputValue','ivFileSize'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', renderIntervalometer);
+  document.getElementById(id).addEventListener('input', renderStackingCard);
+});
+
+// ---------- Bulb timer ----------
+let btIntervalId = null;
+let btEndTime = null;
+let btRemainingAtPause = null;
+let btWakeLock = null;
+
+function btFormat(sec){
+  sec = Math.max(0, Math.ceil(sec));
+  const m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+// Short offline beep via the Web Audio API — no audio files needed.
+function btBeep(freq, durationMs){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs/1000);
+    osc.start();
+    osc.stop(ctx.currentTime + durationMs/1000 + 0.05);
+    osc.onended = ()=> ctx.close();
+  }catch(e){ /* audio not available, timer still works visually */ }
+}
+
+async function btRequestWakeLock(){
+  try{
+    if('wakeLock' in navigator) btWakeLock = await navigator.wakeLock.request('screen');
+  }catch(e){ /* not supported/allowed — timer still runs, screen may sleep */ }
+}
+function btReleaseWakeLock(){
+  try{ btWakeLock && btWakeLock.release(); }catch(e){}
+  btWakeLock = null;
+}
+
+function btTick(){
+  const remainingMs = btEndTime - Date.now();
+  const remainingSec = remainingMs / 1000;
+  document.getElementById('btDisplay').textContent = btFormat(remainingSec);
+  if(remainingMs <= 0){
+    clearInterval(btIntervalId);
+    btIntervalId = null;
+    document.getElementById('btDisplay').textContent = '00:00';
+    document.getElementById('btStatus').textContent = 'Done — close shutter';
+    btBeep(1046, 400);
+    btReleaseWakeLock();
+  }
+}
+
+document.getElementById('btStart').addEventListener('click', async ()=>{
+  if(btIntervalId) return; // already running
+  const dur = btRemainingAtPause != null ? btRemainingAtPause : (parseFloat(document.getElementById('btDuration').value) || 0);
+  if(dur <= 0) return;
+  btEndTime = Date.now() + dur*1000;
+  btRemainingAtPause = null;
+  document.getElementById('btStatus').textContent = 'Running — keep this screen open';
+  btBeep(784, 150);
+  await btRequestWakeLock();
+  btTick();
+  btIntervalId = setInterval(btTick, 250);
+});
+document.getElementById('btStop').addEventListener('click', ()=>{
+  if(!btIntervalId) return;
+  clearInterval(btIntervalId);
+  btIntervalId = null;
+  btRemainingAtPause = (btEndTime - Date.now()) / 1000;
+  document.getElementById('btStatus').textContent = 'Paused';
+  btReleaseWakeLock();
+});
+document.getElementById('btReset').addEventListener('click', ()=>{
+  if(btIntervalId){ clearInterval(btIntervalId); btIntervalId = null; }
+  btRemainingAtPause = null;
+  btReleaseWakeLock();
+  const dur = parseFloat(document.getElementById('btDuration').value) || 0;
+  document.getElementById('btDisplay').textContent = btFormat(dur);
+  document.getElementById('btStatus').textContent = 'Ready';
+});
+document.getElementById('btDuration').addEventListener('input', ()=>{
+  if(btIntervalId) return; // don't rewrite the display while running
+  btRemainingAtPause = null;
+  const dur = parseFloat(document.getElementById('btDuration').value) || 0;
+  document.getElementById('btDisplay').textContent = btFormat(dur);
+});
+document.getElementById('btUseTrail').addEventListener('click', ()=>{
+  const t = parseFloat(document.getElementById('trailSeconds').value);
+  if(isFinite(t) && t > 0){
+    document.getElementById('btDuration').value = Math.round(t);
+    document.getElementById('btDuration').dispatchEvent(new Event('input'));
+  }
 });
 
 
@@ -1113,6 +1679,12 @@ els.cameraProfile.addEventListener('change', ()=>{
 els.nvToggle.addEventListener('click', ()=>{
   document.body.classList.toggle('nv');
   storageSet('nightVision', document.body.classList.contains('nv') ? '1' : '0');
+});
+
+// ---------- Simple mode toggle ----------
+document.getElementById('simpleToggle').addEventListener('click', ()=>{
+  document.body.classList.toggle('simple-mode');
+  storageSet('simpleMode', document.body.classList.contains('simple-mode') ? '1' : '0');
 });
 
 // ---------- Moon phase ----------
@@ -1260,6 +1832,31 @@ function refreshLightPollution(){
     renderScenario();
   }
 }
+
+// ---------- Closest dark site ----------
+function runDarkSiteSearch(){
+  const parksEl = document.getElementById('darkSiteParks');
+  const dirEl = document.getElementById('darkSiteDirection');
+  parksEl.innerHTML = '<div class="empty">Searching…</div>';
+  dirEl.textContent = 'Searching…';
+
+  // Let the "Searching…" state paint before the (fast, but synchronous) search runs.
+  setTimeout(()=>{
+    const parks = findNearestParks(currentLat, currentLon, 3);
+    parksEl.innerHTML = parks.map(p=>{
+      const cls = p.pct < 30 ? 'good' : (p.pct < 50 ? 'ok' : 'bad');
+      return `<div class="compare-row"><div class="compare-head"><b>${p.name} (${p.state})</b><span style="font-family:var(--mono);color:var(--cyan)">${p.dist.toFixed(0)} km</span></div><span class="badge ${cls}" style="margin-top:0">~${p.pct}% estimated light pollution</span></div>`;
+    }).join('');
+
+    const dir = findNearestDarkDirection(currentLat, currentLon, 30, 300, 10);
+    if(dir){
+      dirEl.textContent = `About ${dir.distance} km ${compassLabel(dir.bearing)} of your chosen location, estimated light pollution drops to roughly ${dir.pct}%.`;
+    } else {
+      dirEl.textContent = 'No point within 300 km in any direction dropped below the "rural" threshold in this search — you may already be about as dark as this heuristic can find nearby, or you\'re somewhere this app\'s city/park list is thin.';
+    }
+  }, 30);
+}
+document.getElementById('findDarkSite').addEventListener('click', runDarkSiteSearch);
 
 // ---------- Tonight's sky panel: Milky Way core, constellations, dome ----------
 function currentViewingDate(){
@@ -1550,6 +2147,10 @@ async function initAppearance(){
     const nv = await storageGet('nightVision');
     if(nv === '1') document.body.classList.add('nv');
   }catch(e){}
+  try{
+    const sm = await storageGet('simpleMode');
+    if(sm === '1') document.body.classList.add('simple-mode');
+  }catch(e){}
   let accentKey = 'cyan';
   try{
     const raw = await storageGet('accent');
@@ -1615,15 +2216,134 @@ document.getElementById('addComparison').addEventListener('click', async ()=>{
   renderComparisons();
 });
 
+// ---------- Results journal ----------
+async function loadJournal(){
+  try{
+    const raw = await storageGet('shot-journal');
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+async function saveJournal(list){
+  await storageSet('shot-journal', JSON.stringify(list));
+}
+async function renderJournal(){
+  const list = await loadJournal();
+  const el = document.getElementById('journalList');
+  if(!list.length){
+    el.innerHTML = '<div class="empty">No entries logged yet.</div>';
+    return;
+  }
+  el.innerHTML = [...list].reverse().map((e)=>{
+    const realIdx = list.indexOf(e);
+    return `
+    <div class="compare-row">
+      <div class="compare-head"><b>${e.date}</b><button class="iconbtn" data-del-journal="${realIdx}">Delete</button></div>
+      <div style="color:var(--dim)">${e.target || 'No target noted'}</div>
+      <div style="margin-top:4px;font-family:var(--mono);color:var(--cyan)">${e.focal}mm f/${e.aperture} · ISO ${e.iso} · ${e.exposure}s</div>
+      <div style="margin-top:4px">${e.result}${e.notes ? ' — ' + e.notes : ''}</div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-del-journal]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const list = await loadJournal();
+      list.splice(parseInt(btn.dataset.delJournal), 1);
+      await saveJournal(list);
+      renderJournal();
+    });
+  });
+}
+document.getElementById('journalFill').addEventListener('click', ()=>{
+  document.getElementById('jFocal').value = els.focalLength.value;
+  document.getElementById('jAperture').value = els.aperture.value;
+  const trailT = parseFloat(document.getElementById('trailSeconds').value);
+  const npfT = parseFloat(els.rNPF.textContent);
+  document.getElementById('jExposure').value = isFinite(trailT) && trailT > 0 ? trailT : (isFinite(npfT) ? npfT : '');
+  const isoMatch = document.getElementById('scIso').textContent.match(/\d+/);
+  if(isoMatch) document.getElementById('jIso').value = isoMatch[0];
+});
+document.getElementById('journalAdd').addEventListener('click', async ()=>{
+  const focal = document.getElementById('jFocal').value;
+  const aperture = document.getElementById('jAperture').value;
+  const iso = document.getElementById('jIso').value;
+  const exposure = document.getElementById('jExposure').value;
+  if(!focal || !aperture || !iso || !exposure) return;
+  const list = await loadJournal();
+  list.push({
+    date: new Date().toISOString().slice(0,10),
+    focal, aperture, iso, exposure,
+    target: document.getElementById('jTarget').value.trim(),
+    result: document.getElementById('jResult').value,
+    notes: document.getElementById('jNotes').value.trim()
+  });
+  await saveJournal(list);
+  ['jTarget','jNotes'].forEach(id=> document.getElementById(id).value = '');
+  renderJournal();
+});
+
+// ---------- Night plan ----------
+function buildNightPlanText(){
+  const date = currentViewingDate();
+  const locLabel = document.getElementById('locStatus').textContent || `${currentLat.toFixed(4)}, ${currentLon.toFixed(4)}`;
+  const tw = findTwilightTimes(date, currentLat, currentLon);
+  const fmtT = (d)=> d ? d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '—';
+  const { phase, illum } = moonPhase(date);
+  const gc = altAz(GALACTIC_CENTER.ra, GALACTIC_CENTER.dec, currentLat, currentLon, date);
+  const { pct: lpPct, bucket: lpBucket } = estimateLightPollution(currentLat, currentLon);
+  const sensor = currentSensor();
+  const scenarioLabel = document.getElementById('scenarioSelect').selectedOptions[0].textContent;
+  const isoText = document.getElementById('scIso').textContent.trim();
+
+  const lines = [
+    `NIGHT PLAN — ${els.skyDate.value}`,
+    `Location: ${locLabel} (${currentLat.toFixed(4)}, ${currentLon.toFixed(4)})`,
+    ``,
+    `Twilight`,
+    `  Sunset ${fmtT(tw.sunset)} · Civil dusk ${fmtT(tw.civilDusk)} · Nautical dusk ${fmtT(tw.nauticalDusk)} · Astro dusk ${fmtT(tw.astroDusk)}`,
+    `  Astro dawn ${fmtT(tw.astroDawn)} · Nautical dawn ${fmtT(tw.nauticalDawn)} · Civil dawn ${fmtT(tw.civilDawn)} · Sunrise ${fmtT(tw.sunrise)}`,
+    ``,
+    `Moon: ${moonPhaseName(phase)}, ${Math.round(illum*100)}% illumination`,
+    `Milky Way core: ${gc.altitude.toFixed(0)}° altitude at chosen viewing time`,
+    `Estimated light pollution: ${lpPct}% (${lpBucket})`,
+    ``,
+    `Gear: ${sensor.name}, ${els.focalLength.value}mm, f/${els.aperture.value}, ${els.megapixels.value}MP`,
+    `Exposure (NPF rule): ${els.rNPF.textContent}`,
+    `Shooting: ${scenarioLabel} — suggested ${isoText}`,
+    ``,
+    `Generated offline by DarkSky Guide.`
+  ];
+  return lines.join('\n');
+}
+document.getElementById('buildNightPlan').addEventListener('click', ()=>{
+  const out = document.getElementById('nightPlanOutput');
+  out.textContent = buildNightPlanText();
+  out.style.display = 'block';
+});
+document.getElementById('copyNightPlan').addEventListener('click', async ()=>{
+  const out = document.getElementById('nightPlanOutput');
+  if(out.style.display === 'none') { out.textContent = buildNightPlanText(); out.style.display = 'block'; }
+  try{
+    await navigator.clipboard.writeText(out.textContent);
+    const btn = document.getElementById('copyNightPlan');
+    const original = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(()=> btn.textContent = original, 1500);
+  }catch(e){ /* clipboard permission denied — text is still visible to select manually */ }
+});
+document.getElementById('printNightPlan').addEventListener('click', ()=>{
+  const out = document.getElementById('nightPlanOutput');
+  if(out.style.display === 'none') { out.textContent = buildNightPlanText(); out.style.display = 'block'; }
+  window.print();
+});
+
 // ---------- Update toast ----------
-const APP_VERSION = '2.0';
+const APP_VERSION = '2.4';
 async function checkForUpdateToast(){
   try{
     const seen = await storageGet('app-version');
     if(seen !== null && seen !== APP_VERSION){
       const toast = document.createElement('div');
       toast.className = 'toast';
-      toast.innerHTML = `<span>Updated — national parks, star trails, twilight times, and more added.</span><button aria-label="Dismiss">✕</button>`;
+      toast.innerHTML = `<span>Updated — stacking now covers time-lapses too, with camera mode advice and ISO ceilings per camera.</span><button aria-label="Dismiss">✕</button>`;
       toast.querySelector('button').addEventListener('click', ()=> toast.remove());
       document.body.appendChild(toast);
     }
@@ -1644,6 +2364,7 @@ async function renderPresets(){
       <div class="meta">
         <b>${p.name}</b>
         <span>${SENSORS[p.sensorKey] ? SENSORS[p.sensorKey].name : 'Custom'} · ${p.focalLength}mm · f/${p.aperture} · ${p.megapixels}MP</span>
+        ${p.notes ? `<span style="display:block;margin-top:2px;font-style:italic">${p.notes}</span>` : ''}
       </div>
       <div class="preset-actions">
         <button class="iconbtn" data-load="${i}">Load</button>
@@ -1664,6 +2385,7 @@ async function renderPresets(){
       els.focalLength.value = p.focalLength;
       els.aperture.value = p.aperture;
       els.cameraProfile.value = p.cameraProfile || '';
+      document.getElementById('presetNotes').value = p.notes || '';
       recalc();
       window.scrollTo({top:0, behavior:'smooth'});
     });
@@ -1692,9 +2414,11 @@ async function renderPresets(){
 els.savePreset.addEventListener('click', async ()=>{
   const name = els.presetName.value.trim();
   if(!name){ els.presetName.focus(); return; }
+  const notes = document.getElementById('presetNotes').value.trim();
   const list = await loadPresets();
   list.push({
     name,
+    notes: notes || null,
     cameraProfile: els.cameraProfile.value || null,
     sensorKey: els.sensorSelect.value,
     customWidth: parseFloat(els.customWidth.value) || null,
@@ -1704,6 +2428,7 @@ els.savePreset.addEventListener('click', async ()=>{
   });
   await savePresets(list);
   els.presetName.value = '';
+  document.getElementById('presetNotes').value = '';
   renderPresets();
 });
 
@@ -1711,9 +2436,12 @@ els.savePreset.addEventListener('click', async ()=>{
 recalc();
 renderMoon();
 renderPresets();
+renderJournal();
 initLocation();
 renderTrailPreview();
-renderIntervalometer();
+renderTrailSlider();
+renderStackingCard();
+document.getElementById('btDuration').dispatchEvent(new Event('input'));
 initAppearance();
 renderComparisons();
 checkForUpdateToast();
