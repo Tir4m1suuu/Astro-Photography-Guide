@@ -2336,14 +2336,14 @@ document.getElementById('printNightPlan').addEventListener('click', ()=>{
 });
 
 // ---------- Update toast ----------
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 async function checkForUpdateToast(){
   try{
     const seen = await storageGet('app-version');
     if(seen !== null && seen !== APP_VERSION){
       const toast = document.createElement('div');
       toast.className = 'toast';
-      toast.innerHTML = `<span>Updated — stacking now covers time-lapses too, with camera mode advice and ISO ceilings per camera.</span><button aria-label="Dismiss">✕</button>`;
+      toast.innerHTML = `<span>Updated — new app icon.</span><button aria-label="Dismiss">✕</button>`;
       toast.querySelector('button').addEventListener('click', ()=> toast.remove());
       document.body.appendChild(toast);
     }

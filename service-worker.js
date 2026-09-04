@@ -1,4 +1,4 @@
-const CACHE_NAME = 'darksky-guide-v5';
+const CACHE_NAME = 'darksky-guide-v7';
 const PRECACHE_URLS = [
   './',
   './index.html',
